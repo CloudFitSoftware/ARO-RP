@@ -11,10 +11,17 @@
 trigger: none
 pr: none
 
+parameters:
+- name: vsoDeployerBuildID
+  type: string
+  default: latest
+
 variables:
   CDP_DEFINITION_BUILD_COUNT: $[counter('', 0)] # needed for onebranch.pipeline.version task https://aka.ms/obpipelines/versioning
-  LinuxContainerImage: cdpxlinux.azurecr.io/global/ubuntu-1804-all:5.0   # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+  LinuxContainerImage: centos:centos7   # Docker image which is used to build the project https://aka.ms/obpipelines/containers
   DEBIAN_FRONTEND: noninteractive
+  vso-deployer-pipeline-id: 206753
+  vso-project-id: 5d69ab04-7ded-49dc-84d5-bbbcac4add8d
 
 resources:
   repositories:
@@ -41,9 +48,12 @@ extends:
         suppressionSet: default
 
     stages:
-    - stage: Build_Ev2_Artifacts
+    - stage: Mirror_Images
+      variables:
+      - group: INT RP Service Secrets
       jobs:
-      - job: Build_Ev2_Artifacts
+      - job: Mirror_Images
+        timeoutInMinutes: 360
         pool:
           type: linux
 
@@ -51,30 +61,4 @@ extends:
           ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
 
         steps:
-        - template: .pipelines/onebranch/templates/template-buildrp-buildev2.yml@self
-
-    - stage: Build_Docker_Image
-      jobs:
-      - job: Build_Docker_Image
-        pool:
-          type: docker
-          os: linux
-
-        variables:
-          ob_git_checkout: true
-
-        steps:
-        - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
-
-
-    - stage: Build_ARO
-      jobs:
-      - job: Build_ARO
-        pool:
-          type: linux
-
-        variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-          ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
-
-        steps:
-        - template: .pipelines/onebranch/templates/template-buildrp-buildaro.yml@self
+        - template: .pipelines/onebranch/templates/template-image-mirror.yml@self
