@@ -51,23 +51,7 @@ extends:
           ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
 
         steps:
-        - checkout: rhado
-        - task: GoTool@0
-          displayName: Use Go 1.16.2
-          inputs:
-            version: 1.16.2
-        - task: Go@0
-          inputs:
-            command: custom
-            customCommand: run
-            arguments: . --config-path ./config/
-            workingDirectory: $(Build.SourcesDirectory)/ARO.Pipelines/ev2/generator/
-          displayName: ⚙️ Generate Ev2 Deployment Manifests
-        - task: Bash@3
-          displayName: ⚙️ Copy to ob_outputDirectory
-          inputs:
-            targetType: filePath
-            filePath: .pipelines/onebranch/scripts/deploymentpipeline.sh
+        - template: ./pipelines/onebranch/templates/template-buildrp-buildev2.yml
 
 # https://onebranch.visualstudio.com/OneBranch/_wiki/wikis/OneBranch.wiki/4605/Artifacts
 
