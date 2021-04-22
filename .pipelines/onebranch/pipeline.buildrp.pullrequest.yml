@@ -51,9 +51,7 @@ extends:
           ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
 
         steps:
-        - template: ./pipelines/onebranch/templates/template-buildrp-buildev2.yml
-
-# https://onebranch.visualstudio.com/OneBranch/_wiki/wikis/OneBranch.wiki/4605/Artifacts
+        - template: .pipelines/onebranch/templates/template-buildrp-buildev2.yml@self
 
     - stage: Build_Docker_Image
       jobs:
@@ -61,20 +59,12 @@ extends:
         pool:
           type: docker
           os: linux
+
         variables:
           ob_git_checkout: true
+
         steps:
-        - task: onebranch.pipeline.imagebuildinfo@1
-          displayName: Build Multi Stage Dockerfile
-          inputs:
-            repositoryName: aro-rp
-            dockerFileRelPath: ./Dockerfile.aro-multistage
-            dockerFileContextPath: ./
-            registry: cdpxlinux.azurecr.io
-            saveImageToPath: aro-rp.tar
-            buildkit: 1
-            enable_network: true
-            build_tag: $(Build.BuildNumber)
+        - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
 
 
     - stage: Build_ARO
@@ -87,23 +77,4 @@ extends:
           ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
 
         steps:
-        - task: GoTool@0
-          displayName: Use Go 1.14
-          inputs:
-            version: '1.14'
-            GOPATH: $(Agent.TempDirectory)
-        - task: Bash@3
-          displayName: ⚙️ Make ARO
-          inputs:
-            targetType: inline
-            script: |
-              mkdir -p $(Agent.TempDirectory)/src/github.com/Azure/
-              cp -rd $(Build.SourcesDirectory) $(Agent.TempDirectory)/src/github.com/Azure/ARO-RP
-              cd $(Agent.TempDirectory)/src/github.com/Azure/ARO-RP
-              ls
-              git rev-parse --short HEAD
-              git status --porcelain
-              make aro
-              mkdir -p $(ob_outputDirectory) 
-              cp aro $(ob_outputDirectory)/aro
-            workingDirectory: $(Build.SourcesDirectory)
+        - template: .pipelines/onebranch/templates/template-buildrp-buildaro.yml@self
