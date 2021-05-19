@@ -13,7 +13,8 @@ steps:
       cp -rd $(Build.SourcesDirectory) $(Agent.TempDirectory)/src/github.com/Azure/ARO-RP
       cd $(Agent.TempDirectory)/src/github.com/Azure/ARO-RP
       git status
-      git status --porcelain
+      gitStatusResult=$(git status --porcelain)
+      echo git status result: \" "$gitStatusResult" \"
       make aro
       mkdir -p $(ob_outputDirectory) 
       cp aro $(ob_outputDirectory)/aro
