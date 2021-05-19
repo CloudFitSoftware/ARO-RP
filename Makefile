@@ -3,7 +3,6 @@ COMMIT = $(shell git rev-parse --short=7 HEAD)$(shell [[ $$(git status --porcela
 ARO_IMAGE ?= ${RP_IMAGE_ACR}.azurecr.io/aro:$(COMMIT)
 
 ifneq ($(shell uname -s),Darwin)
-    export CGO_CFLAGS=-Dgpgme_off_t=off_t
 endif
 
 aro: generate
@@ -38,6 +37,7 @@ discoverycache:
 	$(MAKE) generate
 
 generate:
+	echo $(COMMIT)
 	go generate ./...
 
 image-aro: aro e2e.test
