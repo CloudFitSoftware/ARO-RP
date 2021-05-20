@@ -519,6 +519,8 @@ cat >/etc/td-agent-bit/td-agent-bit.conf <<'EOF'
 	Port 29230
 EOF
 
+export AZURE_CLOUD_NAME="AzureUSGovernment"
+
 az login -i
 az account set -s "$SUBSCRIPTIONID"
 
