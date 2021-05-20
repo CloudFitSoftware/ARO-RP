@@ -6,7 +6,6 @@ ifneq ($(shell uname -s),Darwin)
 endif
 
 aro: generate
-	echo $(COMMIT)
 	go build -tags containers_image_openpgp -ldflags "-X github.com/Azure/ARO-RP/pkg/util/version.GitCommit=$(COMMIT)" ./cmd/aro
 
 az: pyenv
@@ -38,7 +37,6 @@ discoverycache:
 	$(MAKE) generate
 
 generate:
-	echo $(COMMIT)
 	go generate ./...
 
 image-aro: aro e2e.test
