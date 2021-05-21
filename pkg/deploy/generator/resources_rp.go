@@ -831,6 +831,8 @@ fi
 SECRET_NAME="rp-\${COMPONENT}"
 NEW_CERT_FILE="\$TEMP_DIR/\$COMPONENT.pem"
 for attempt in {1..5}; do
+  echo "Keyvault Prefix: $KEYVAULTPREFIX"
+  echo "Secret Name: $SECRET_NAME"
   az keyvault secret download --file \$NEW_CERT_FILE --id "https://$KEYVAULTPREFIX-svc.vault.usgovcloudapi.net/secrets/\$SECRET_NAME" && break
   if [[ \$attempt -lt 5 ]]; then sleep 10; else exit 1; fi
 done
