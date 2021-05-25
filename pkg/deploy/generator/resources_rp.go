@@ -519,8 +519,6 @@ cat >/etc/td-agent-bit/td-agent-bit.conf <<'EOF'
 	Port 29230
 EOF
 
-export AZURE_CLOUD_NAME="AzureUSGovernment"
-
 az login -i
 az account set -s "$SUBSCRIPTIONID"
 
@@ -831,7 +829,7 @@ fi
 SECRET_NAME="rp-\${COMPONENT}"
 NEW_CERT_FILE="\$TEMP_DIR/\$COMPONENT.pem"
 for attempt in {1..5}; do
-  az keyvault secret download --file \$NEW_CERT_FILE --id "https://$KEYVAULTPREFIX-svc.vault.usgovcloudapi.net/secrets/\$SECRET_NAME" && break
+  az keyvault secret download --file \$NEW_CERT_FILE --id "https://$KEYVAULTPREFIX-svc.vault.azure.net/secrets/\$SECRET_NAME" && break
   if [[ \$attempt -lt 5 ]]; then sleep 10; else exit 1; fi
 done
 
