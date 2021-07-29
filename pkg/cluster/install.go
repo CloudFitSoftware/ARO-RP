@@ -105,7 +105,8 @@ func (m *manager) Install(ctx context.Context) error {
 			steps.Action(func(ctx context.Context) error {
 				return m.ensureGraph(ctx, installConfig, image)
 			}),
-			steps.AuthorizationRefreshingAction(m.fpAuthorizer, steps.Action(m.attachNSGsAndPatch)),
+			steps.AuthorizationRefreshingAction(m.fpAuthorizer, steps.Action(m.attachNSGs)),
+			steps.AuthorizationRefreshingAction(m.fpAuthorizer, steps.Action(m.generateKubeconfigs)),
 			steps.Action(m.ensureBillingRecord),
 			steps.AuthorizationRefreshingAction(m.fpAuthorizer, steps.Action(m.deployResourceTemplate)),
 			steps.Action(m.createAPIServerPrivateEndpoint),
@@ -151,7 +152,7 @@ func (m *manager) Install(ctx context.Context) error {
 
 func (m *manager) runSteps(ctx context.Context, s []steps.Step) error {
 	err := steps.Run(ctx, m.log, 10*time.Second, s)
-	if err != nil && !m.env.IsLocalDevelopmentMode() {
+	if err != nil {
 		m.gatherFailureLogs(ctx)
 	}
 	return err

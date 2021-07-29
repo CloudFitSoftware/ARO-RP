@@ -12,16 +12,23 @@ import (
 const InstallArchitectureVersion = api.ArchitectureVersionV2
 
 const (
-	DevClusterGenevaLoggingEnvironment   = "Test"
-	DevClusterGenevaLoggingConfigVersion = "2.3"
+	DevClusterGenevaLoggingAccount       = "AROClusterLogs"
+	DevClusterGenevaLoggingConfigVersion = "2.4"
+	DevClusterGenevaLoggingNamespace     = "AROClusterLogs"
+	DevClusterGenevaMetricsAccount       = "AzureRedHatOpenShiftCluster"
+	DevGenevaLoggingEnvironment          = "Test"
+	DevRPGenevaLoggingAccount            = "ARORPLogs"
+	DevRPGenevaLoggingConfigVersion      = "3.7"
+	DevRPGenevaLoggingNamespace          = "ARORPLogs"
+	DevRPGenevaMetricsAccount            = "AzureRedHatOpenShiftRP"
 )
 
 var GitCommit = "unknown"
 
 // InstallStream describes stream we are defaulting to for all new clusters
 var InstallStream = &Stream{
-	Version:  NewVersion(4, 7, 18),
-	PullSpec: "quay.io/openshift-release-dev/ocp-release@sha256:afcb309425d45a240de2df8e376f9632e6144052177fd62a0347934657b3573f",
+	Version:  NewVersion(4, 7, 21),
+	PullSpec: "quay.io/openshift-release-dev/ocp-release@sha256:60454c3270a61432447c752a9d5ee3e7d84cebcfd5d371eb4daa263623923dac",
 }
 
 // Streams describes list of streams we support for upgrades
@@ -29,8 +36,8 @@ var (
 	Streams = []*Stream{
 		InstallStream,
 		{
-			Version:  NewVersion(4, 6, 36),
-			PullSpec: "quay.io/openshift-release-dev/ocp-release@sha256:4205c6709ec4b8523eb18144f7c5bed17a32ba71348fd4c2b6ab43a636cf028e",
+			Version:  NewVersion(4, 6, 40),
+			PullSpec: "quay.io/openshift-release-dev/ocp-release@sha256:a8bc2a472611d499d99f347b3e2a7c385107e9c4e44b45d765a99338b566dd12",
 		},
 		{
 			Version:  NewVersion(4, 5, 39),
@@ -55,7 +62,7 @@ func MdmImage(acrDomain string) string {
 		return os.Getenv("GENEVA_MDM_IMAGE_OVERRIDE")
 	}
 
-	return acrDomain + "/genevamdm:master_20210401.1"
+	return acrDomain + "/genevamdm:master_20210704.1"
 }
 
 // MdsdImage contains the location of the MDSD container image
@@ -65,5 +72,5 @@ func MdsdImage(acrDomain string) string {
 		return os.Getenv("GENEVA_MDSD_IMAGE_OVERRIDE")
 	}
 
-	return acrDomain + "/genevamdsd:master_20210401.1"
+	return acrDomain + "/genevamdsd:master_20210713.2"
 }

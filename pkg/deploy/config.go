@@ -34,6 +34,7 @@ type Configuration struct {
 	ACRLocationOverride                *string       `json:"acrLocationOverride,omitempty"`
 	ACRResourceID                      *string       `json:"acrResourceId,omitempty" value:"required"`
 	AzureCloudName                     *string       `json:"azureCloudName,omitempty" value:"required"`
+	AzureSecPackVSATenantId            *string       `json:"azureSecPackVSATenantId,omitempty"`
 	RPVersionStorageAccountName        *string       `json:"rpVersionStorageAccountName,omitempty" value:"required"`
 	ACRReplicaDisabled                 *bool         `json:"acrReplicaDisabled,omitempty"`
 	AdminAPICABundle                   *string       `json:"adminApiCaBundle,omitempty" value:"required"`
@@ -43,7 +44,10 @@ type Configuration struct {
 	ARMClientID                        *string       `json:"armClientId,omitempty"`
 	BillingE2EStorageAccountID         *string       `json:"billingE2EStorageAccountId,omitempty"`
 	BillingServicePrincipalID          *string       `json:"billingServicePrincipalId,omitempty"`
+	ClusterMDMAccount                  *string       `json:"clusterMdmAccount,omitempty" value:"required"`
+	ClusterMDSDAccount                 *string       `json:"clusterMdsdAccount,omitempty" value:"required"`
 	ClusterMDSDConfigVersion           *string       `json:"clusterMdsdConfigVersion,omitempty" value:"required"`
+	ClusterMDSDNamespace               *string       `json:"clusterMdsdNamespace,omitempty" value:"required"`
 	ClusterParentDomainName            *string       `json:"clusterParentDomainName,omitempty" value:"required"`
 	DatabaseAccountName                *string       `json:"databaseAccountName,omitempty" value:"required"`
 	DisableCosmosDBFirewall            *bool         `json:"disableCosmosDBFirewall,omitempty"`
@@ -67,7 +71,10 @@ type Configuration struct {
 	PortalElevatedGroupIDs             []string      `json:"portalElevatedGroupIds,omitempty" value:"required"`
 	RPFeatures                         []string      `json:"rpFeatures,omitempty"`
 	RPImagePrefix                      *string       `json:"rpImagePrefix,omitempty" value:"required"`
+	RPMDMAccount                       *string       `json:"rpMdmAccount,omitempty" value:"required"`
+	RPMDSDAccount                      *string       `json:"rpMdsdAccount,omitempty" value:"required"`
 	RPMDSDConfigVersion                *string       `json:"rpMdsdConfigVersion,omitempty" value:"required"`
+	RPMDSDNamespace                    *string       `json:"rpMdsdNamespace,omitempty" value:"required"`
 	RPNSGSourceAddressPrefixes         []string      `json:"rpNsgSourceAddressPrefixes,omitempty" value:"required"`
 	RPParentDomainName                 *string       `json:"rpParentDomainName,omitempty" value:"required"`
 	SubscriptionResourceGroupName      *string       `json:"subscriptionResourceGroupName,omitempty" value:"required"`
