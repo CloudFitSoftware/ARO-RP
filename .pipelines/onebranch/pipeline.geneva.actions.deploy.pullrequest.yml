@@ -39,3 +39,8 @@ extends:
       suppression:
         suppressionFile: $(Build.SourcesDirectory)\.gdn\.gdnsuppress
         suppressionSet: default
+
+    stages:
+      - stage: GenevaActions
+        jobs:
+          - template: .pipelines/onebranch/templates/template-geneva-actions-deploy.yml@self
