@@ -25,6 +25,7 @@ resources:
     - repository: rhado
       type: git
       name: ARO.Pipelines
+      ref: refs/heads/v-lugask/enable-deploying-geneva-actions
 
 extends:
   template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
