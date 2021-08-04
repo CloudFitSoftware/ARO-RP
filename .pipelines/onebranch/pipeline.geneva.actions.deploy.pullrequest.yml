@@ -41,6 +41,6 @@ extends:
         suppressionSet: default
 
     stages:
-      - stage: GenevaActions
+      - stage: GenevaActionsDeploy
         jobs:
           - template: .pipelines/onebranch/templates/template-geneva-actions-deploy.yml@self
