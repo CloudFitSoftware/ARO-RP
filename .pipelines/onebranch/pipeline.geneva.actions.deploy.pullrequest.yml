@@ -18,14 +18,9 @@ variables:
 
 resources:
   repositories:
-    - repository: templates
-      type: git
-      name: OneBranch.Pipelines/GovernedTemplates
-      ref: refs/heads/main
     - repository: rhado
       type: git
       name: ARO.Pipelines
-      ref: refs/heads/v-lugask/enable-deploying-geneva-actions
 
 extends:
   template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
