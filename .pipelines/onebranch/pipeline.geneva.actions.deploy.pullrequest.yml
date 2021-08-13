@@ -25,6 +25,7 @@ resources:
     - repository: rhado
       type: git
       name: ARO.Pipelines
+      ref: refs/heads/fix-geneva-actions-deploy
 
 extends:
   template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
