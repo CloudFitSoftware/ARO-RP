@@ -29,7 +29,7 @@ resources:
   pipelines:
     - pipeline: actions
       project: One
-      source: Compute-ARO-GenevaActions-Windows-Official-master
+      source: CDPX\Compute-ARO-GenevaActions\Compute-ARO-GenevaActions-Windows-Official-master
       branch: master
 
 extends:
