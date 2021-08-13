@@ -12,19 +12,3 @@ jobs:
       - template: ./template-generate-ev2-manifests.yml
         parameters:
           generationType: geneva-actions-deploy
-
-      - task: DownloadPipelineArtifact@2
-        inputs:
-          source: specific
-          project: One
-          pipeline: 125979 # CDPX\Compute-ARO-GenevaActions\Compute-ARO-GenevaActions-Windows-Official-master
-          runBranch: "refs/heads/master"
-          runVersion: "latest"
-          artifact: drop
-          downloadPath: $(Build.SourcesDirectory)/actions
-      - task: CopyFiles@2
-        displayName: ⚙️ Copy to ob_outputDirectory
-        inputs:
-          sourceFolder: $(Build.SourcesDirectory)/actions/drop/outputs/package/GenevaArtifacts
-          contents: "**"
-          targetFolder: ${{ variables.ob_outputDirectory }}/ServiceGroupRoot/actions
