@@ -16,7 +16,8 @@ jobs:
       - download: actions
         artifact: drop
       - task: CopyFiles@2
+        displayName: ⚙️ Copy to ob_outputDirectory
         inputs:
           sourceFolder: $(PIPELINE.WORKSPACE)/actions/drop/outputs/package/GenevaArtifacts
           contents: "**"
-          targetFolder: ${{ variables.ob_outputDirectory }}/actions
+          targetFolder: ${{ variables.ob_outputDirectory }}/ServiceGroupRoot/actions
