@@ -12,3 +12,11 @@ jobs:
       - template: ./template-generate-ev2-manifests.yml
         parameters:
           generationType: geneva-actions-deploy
+
+      - download: actions
+        artifact: drop
+      - task: CopyFiles@2
+        inputs:
+          sourceFolder: $(PIPELINE.WORKSPACE)/actions/drop/outputs/package/GenevaArtifacts
+          contents: "**"
+          targetFolder: ${{ variables.ob_outputDirectory }}/actions
