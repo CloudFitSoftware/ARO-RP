@@ -9,6 +9,7 @@ parameters:
   - geneva-bootstrapper
   - kusto
   - mirroring
+  - policies
 
 steps:
 - checkout: rhado
