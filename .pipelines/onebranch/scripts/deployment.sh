@@ -28,9 +28,15 @@ du -h ./ARO.Pipelines/ev2/generator/
 
 echo "run du $OB_OUTPUTDIRECTORY/Shell"
 du -h $OB_OUTPUTDIRECTORY/Shell
+cat ./RP-Config/deploy/ffint-config.yaml
+file ./RP-Config/deploy/ffint-config.yaml
+du -h ./RP-Config/deploy/ffint-config.yaml
 
+cat ./RP-Config/deploy/ffprod-config.yaml
+file ./RP-Config/deploy/ffprod-config.yaml
+du -h ./RP-Config/deploy/ffprod-config.yaml
 tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "$OB_OUTPUTDIRECTORY/Shell" $(cd $OB_OUTPUTDIRECTORY/Shell; echo *)
-tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "./RP-Config/deploy" $(cd ./RP-Config/deploy; echo *)
+tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "./RP-Config/deploy" ffint-config.yaml ffprod-config.yaml int-config.yaml prod-config.yaml
 
 echo "Copy tar to ob_outputdirectory dir"
 cp -r ./ARO.Pipelines/ev2/Deployment/ServiceGroupRoot/ $OB_OUTPUTDIRECTORY/
