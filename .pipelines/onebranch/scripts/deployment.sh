@@ -34,8 +34,9 @@ tar --version
 
 du -h ./RP-Config/deploy/ffint-config.yaml
 du -h ./RP-Config/deploy/ffprod-config.yaml
-tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "$OB_OUTPUTDIRECTORY/Shell" $(cd $OB_OUTPUTDIRECTORY/Shell; echo *)
+# tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "$OB_OUTPUTDIRECTORY/Shell" $(cd $OB_OUTPUTDIRECTORY/Shell; echo *)
 tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "./RP-Config/deploy" ffint-config.yaml
+tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "$OB_OUTPUTDIRECTORY/Shell" $(cd $OB_OUTPUTDIRECTORY/Shell; echo *)
 
 echo "Copy tar to ob_outputdirectory dir"
 cp -r ./ARO.Pipelines/ev2/Deployment/ServiceGroupRoot/ $OB_OUTPUTDIRECTORY/
