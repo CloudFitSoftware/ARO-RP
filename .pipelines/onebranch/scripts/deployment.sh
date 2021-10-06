@@ -1,4 +1,4 @@
-set -e
+set -ex
 
 echo "Creating required directories"
 
@@ -18,6 +18,16 @@ rm crane.tar.gz
 popd
 
 echo "Copying required files to ob_outputdirectory: ${OB_OUTPUTDIRECTORY}"
+
+echo "ls -la"
+ls -la
+
+echo "ls -lart ./ARO.Pipelines/ev2/generator/"
+echo "run du ./ARO.Pipelines/ev2/generator/"
+du -h ./ARO.Pipelines/ev2/generator/
+
+echo "run du $OB_OUTPUTDIRECTORY/Shell"
+du -h $OB_OUTPUTDIRECTORY/Shell
 
 tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "$OB_OUTPUTDIRECTORY/Shell" $(cd $OB_OUTPUTDIRECTORY/Shell; echo *)
 tar -rvf ./ARO.Pipelines/ev2/generator/deployment.tar -C "./RP-Config/deploy" $(cd ./RP-Config/deploy; echo *)
