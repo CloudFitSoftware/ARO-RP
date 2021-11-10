@@ -6,22 +6,12 @@ package network
 import (
 	"context"
 
-	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-07-01/network"
+	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-08-01/network"
 )
 
 // SecurityGroupsClientAddons contains addons for SecurityGroupsClient
 type SecurityGroupsClientAddons interface {
-	CreateOrUpdateAndWait(ctx context.Context, resourceGroupName string, networkSecurityGroupName string, parameters mgmtnetwork.SecurityGroup) (err error)
 	List(ctx context.Context, resourceGroupName string) (result []mgmtnetwork.SecurityGroup, err error)
-}
-
-func (c *securityGroupsClient) CreateOrUpdateAndWait(ctx context.Context, resourceGroupName string, networkSecurityGroupName string, parameters mgmtnetwork.SecurityGroup) (err error) {
-	future, err := c.CreateOrUpdate(ctx, resourceGroupName, networkSecurityGroupName, parameters)
-	if err != nil {
-		return err
-	}
-
-	return future.WaitForCompletionRef(ctx, c.Client)
 }
 
 func (c *securityGroupsClient) List(ctx context.Context, resourceGroupName string) (result []mgmtnetwork.SecurityGroup, err error) {

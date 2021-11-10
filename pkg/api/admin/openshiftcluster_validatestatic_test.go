@@ -129,6 +129,31 @@ func TestOpenShiftClusterStaticValidateDelta(t *testing.T) {
 			wantErr: "400: PropertyChangeNotAllowed: properties.lastAdminUpdateError: Changing property 'properties.lastAdminUpdateError' is not allowed.",
 		},
 		{
+			name: "valid gatewayEnabled change",
+			oc: func() *OpenShiftCluster {
+				return &OpenShiftCluster{}
+			},
+			modify: func(oc *OpenShiftCluster) {
+				oc.Properties.FeatureProfile.GatewayEnabled = true
+			},
+		},
+		{
+			name: "valid gatewayEnabled change",
+			oc: func() *OpenShiftCluster {
+				return &OpenShiftCluster{
+					Properties: OpenShiftClusterProperties{
+						FeatureProfile: FeatureProfile{
+							GatewayEnabled: true,
+						},
+					},
+				}
+			},
+			modify: func(oc *OpenShiftCluster) {
+				oc.Properties.FeatureProfile.GatewayEnabled = false
+			},
+			wantErr: "400: PropertyChangeNotAllowed: properties.featureProfile.gatewayEnabled: Changing property 'properties.featureProfile.gatewayEnabled' is not allowed.",
+		},
+		{
 			name: "console url change is not allowed",
 			oc: func() *OpenShiftCluster {
 				return &OpenShiftCluster{
@@ -313,18 +338,18 @@ func TestOpenShiftClusterStaticValidateDelta(t *testing.T) {
 			wantErr: "400: PropertyChangeNotAllowed: properties.servicePrincipalProfile.spObjectId: Changing property 'properties.servicePrincipalProfile.spObjectId' is not allowed.",
 		},
 		{
-			name: "sdnProvider change is not allowed",
+			name: "softwareDefinedNetwork change is not allowed",
 			oc: func() *OpenShiftCluster {
 				return &OpenShiftCluster{
 					Properties: OpenShiftClusterProperties{
 						NetworkProfile: NetworkProfile{
-							SDNProvider: SDNProviderOVNKubernetes,
+							SoftwareDefinedNetwork: SoftwareDefinedNetworkOVNKubernetes,
 						},
 					},
 				}
 			},
-			modify:  func(oc *OpenShiftCluster) { oc.Properties.NetworkProfile.SDNProvider = "anything" },
-			wantErr: "400: PropertyChangeNotAllowed: properties.networkProfile.sdnProvider: Changing property 'properties.networkProfile.sdnProvider' is not allowed.",
+			modify:  func(oc *OpenShiftCluster) { oc.Properties.NetworkProfile.SoftwareDefinedNetwork = "anything" },
+			wantErr: "400: PropertyChangeNotAllowed: properties.networkProfile.softwareDefinedNetwork: Changing property 'properties.networkProfile.softwareDefinedNetwork' is not allowed.",
 		},
 		{
 			name: "podCidr change is not allowed",
@@ -367,6 +392,34 @@ func TestOpenShiftClusterStaticValidateDelta(t *testing.T) {
 			},
 			modify:  func(oc *OpenShiftCluster) { oc.Properties.NetworkProfile.APIServerPrivateEndpointIP = "4.3.2.1" },
 			wantErr: "400: PropertyChangeNotAllowed: properties.networkProfile.privateEndpointIp: Changing property 'properties.networkProfile.privateEndpointIp' is not allowed.",
+		},
+		{
+			name: "gatewayPrivateEndpointIp change is not allowed",
+			oc: func() *OpenShiftCluster {
+				return &OpenShiftCluster{
+					Properties: OpenShiftClusterProperties{
+						NetworkProfile: NetworkProfile{
+							GatewayPrivateEndpointIP: "1.2.3.4",
+						},
+					},
+				}
+			},
+			modify:  func(oc *OpenShiftCluster) { oc.Properties.NetworkProfile.GatewayPrivateEndpointIP = "4.3.2.1" },
+			wantErr: "400: PropertyChangeNotAllowed: properties.networkProfile.gatewayPrivateEndpointIp: Changing property 'properties.networkProfile.gatewayPrivateEndpointIp' is not allowed.",
+		},
+		{
+			name: "gatewayPrivateLinkId change is not allowed",
+			oc: func() *OpenShiftCluster {
+				return &OpenShiftCluster{
+					Properties: OpenShiftClusterProperties{
+						NetworkProfile: NetworkProfile{
+							GatewayPrivateLinkID: "1",
+						},
+					},
+				}
+			},
+			modify:  func(oc *OpenShiftCluster) { oc.Properties.NetworkProfile.GatewayPrivateLinkID = "2" },
+			wantErr: "400: PropertyChangeNotAllowed: properties.networkProfile.gatewayPrivateLinkId: Changing property 'properties.networkProfile.gatewayPrivateLinkId' is not allowed.",
 		},
 		{
 			name: "master subnetId change is not allowed",
@@ -513,6 +566,18 @@ func TestOpenShiftClusterStaticValidateDelta(t *testing.T) {
 			wantErr: "400: PropertyChangeNotAllowed: properties.storageSuffix: Changing property 'properties.storageSuffix' is not allowed.",
 		},
 		{
+			name: "imageRegistryStorageAccountName change is not allowed",
+			oc: func() *OpenShiftCluster {
+				return &OpenShiftCluster{
+					Properties: OpenShiftClusterProperties{
+						ImageRegistryStorageAccountName: "rexs1",
+					},
+				}
+			},
+			modify:  func(oc *OpenShiftCluster) { oc.Properties.ImageRegistryStorageAccountName = "invalid" },
+			wantErr: "400: PropertyChangeNotAllowed: properties.imageRegistryStorageAccountName: Changing property 'properties.imageRegistryStorageAccountName' is not allowed.",
+		},
+		{
 			name: "createdAt change is not allowed",
 			oc: func() *OpenShiftCluster {
 				return &OpenShiftCluster{
@@ -553,6 +618,20 @@ func TestOpenShiftClusterStaticValidateDelta(t *testing.T) {
 				oc.Properties.ProvisionedBy = "someothersha"
 			},
 			wantErr: "400: PropertyChangeNotAllowed: properties.provisionedBy: Changing property 'properties.provisionedBy' is not allowed.",
+		},
+		{
+			name: "registryProfiles change is not allowed",
+			oc: func() *OpenShiftCluster {
+				return &OpenShiftCluster{
+					Properties: OpenShiftClusterProperties{
+						RegistryProfiles: []RegistryProfile{{Name: "test", Username: "testuser"}},
+					},
+				}
+			},
+			modify: func(oc *OpenShiftCluster) {
+				oc.Properties.RegistryProfiles[0].Username = "someothertestuser"
+			},
+			wantErr: "400: PropertyChangeNotAllowed: properties.registryProfiles: Changing property 'properties.registryProfiles' is not allowed.",
 		},
 	}
 

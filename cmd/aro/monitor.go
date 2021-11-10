@@ -17,6 +17,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/metrics/noop"
 	"github.com/Azure/ARO-RP/pkg/metrics/statsd"
 	"github.com/Azure/ARO-RP/pkg/metrics/statsd/azure"
+	"github.com/Azure/ARO-RP/pkg/metrics/statsd/golang"
 	"github.com/Azure/ARO-RP/pkg/metrics/statsd/k8s"
 	pkgmonitor "github.com/Azure/ARO-RP/pkg/monitor"
 	"github.com/Azure/ARO-RP/pkg/proxy"
@@ -45,6 +46,13 @@ func monitor(ctx context.Context, log *logrus.Entry) error {
 
 	m := statsd.New(ctx, log.WithField("component", "metrics"), _env, os.Getenv("MDM_ACCOUNT"), os.Getenv("MDM_NAMESPACE"))
 
+	g, err := golang.NewMetrics(log.WithField("component", "metrics"), m)
+	if err != nil {
+		return err
+	}
+
+	go g.Run()
+
 	tracing.Register(azure.New(m))
 	kmetrics.Register(kmetrics.RegisterOpts{
 		RequestResult:  k8s.NewResult(m),
@@ -71,12 +79,7 @@ func monitor(ctx context.Context, log *logrus.Entry) error {
 
 	serviceKeyvault := keyvault.NewManager(msiKVAuthorizer, serviceKeyvaultURI)
 
-	key, err := serviceKeyvault.GetBase64Secret(ctx, env.EncryptionSecretName)
-	if err != nil {
-		return err
-	}
-
-	aead, err := encryption.NewXChaCha20Poly1305(ctx, key)
+	aead, err := encryption.NewMulti(ctx, serviceKeyvault, env.EncryptionSecretV2Name, env.EncryptionSecretName)
 	if err != nil {
 		return err
 	}

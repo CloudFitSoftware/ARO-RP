@@ -35,7 +35,7 @@ locations.
    development environment key vault(s).  Set ADMIN_OBJECT_ID to the object ID.
 
    ```bash
-   ADMIN_OBJECT_ID="$(az ad group show -g Engineering --query objectId -o tsv)"
+   ADMIN_OBJECT_ID="$(az ad group show -g 'ARO v4 RP Engineering' --query objectId -o tsv)"
    ```
 
 1. You will need the ARO RP-specific pull secret (ask one of the
@@ -154,6 +154,21 @@ locations.
    * `Reader` on RESOURCEGROUP.
    * `Secrets / Get` on the key vault in RESOURCEGROUP.
    * `DocumentDB Account Contributor` on the CosmosDB resource in RESOURCEGROUP.
+
+1. Create an AAD application which will fake up the gateway identity.
+
+   ```bash
+   AZURE_GATEWAY_CLIENT_SECRET="$(uuidgen)"
+   AZURE_GATEWAY_CLIENT_ID="$(az ad app create \
+     --display-name aro-v4-gateway-shared \
+     --end-date '2299-12-31T11:59:59+00:00' \
+     --identifier-uris "https://$(uuidgen)/" \
+     --key-type password \
+     --password "$AZURE_GATEWAY_CLIENT_SECRET" \
+     --query appId \
+     -o tsv)"
+   az ad sp create --id "$AZURE_GATEWAY_CLIENT_ID" >/dev/null
+   ```
 
 1. Create an AAD application which will be used by E2E and tooling.
 
@@ -345,6 +360,9 @@ locations.
    export AZURE_CLIENT_SECRET='$AZURE_CLIENT_SECRET'
    export AZURE_RP_CLIENT_ID='$AZURE_RP_CLIENT_ID'
    export AZURE_RP_CLIENT_SECRET='$AZURE_RP_CLIENT_SECRET'
+   export AZURE_GATEWAY_CLIENT_ID='$AZURE_GATEWAY_CLIENT_ID'
+   export AZURE_GATEWAY_SERVICE_PRINCIPAL_ID='$(az ad sp list --filter "appId eq '$AZURE_GATEWAY_CLIENT_ID'" --query '[].objectId' -o tsv)'
+   export AZURE_GATEWAY_CLIENT_SECRET='$AZURE_GATEWAY_CLIENT_SECRET'
    export RESOURCEGROUP="$RESOURCEGROUP_PREFIX-\$LOCATION"
    export PROXY_HOSTNAME="vm0.$PROXY_DOMAIN_NAME_LABEL.\$LOCATION.cloudapp.azure.com"
    export DATABASE_NAME="\$USER"
@@ -428,8 +446,16 @@ each of the bash functions below.
         --name rp-mdm \
         --file secrets/rp-metrics-int.pem
    az keyvault certificate import \
+        --vault-name "$KEYVAULT_PREFIX-gwy" \
+        --name gwy-mdm \
+        --file secrets/rp-metrics-int.pem
+   az keyvault certificate import \
         --vault-name "$KEYVAULT_PREFIX-svc" \
         --name rp-mdsd \
+        --file secrets/rp-logging-int.pem
+   az keyvault certificate import \
+        --vault-name "$KEYVAULT_PREFIX-gwy" \
+        --name gwy-mdsd \
         --file secrets/rp-logging-int.pem
    az keyvault certificate import \
         --vault-name "$KEYVAULT_PREFIX-svc" \

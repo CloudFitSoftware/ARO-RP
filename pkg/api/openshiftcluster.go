@@ -107,6 +107,8 @@ type OpenShiftClusterProperties struct {
 
 	ClusterProfile ClusterProfile `json:"clusterProfile,omitempty"`
 
+	FeatureProfile FeatureProfile `json:"featureProfile,omitempty"`
+
 	ConsoleProfile ConsoleProfile `json:"consoleProfile,omitempty"`
 
 	ServicePrincipalProfile ServicePrincipalProfile `json:"servicePrincipalProfile,omitempty"`
@@ -124,7 +126,8 @@ type OpenShiftClusterProperties struct {
 	// Install is non-nil only when an install is in progress
 	Install *Install `json:"install,omitempty"`
 
-	StorageSuffix string `json:"storageSuffix,omitempty"`
+	StorageSuffix                   string `json:"storageSuffix,omitempty"`
+	ImageRegistryStorageAccountName string `json:"imageRegistryStorageAccountName,omitempty"`
 
 	InfraID string      `json:"infraId,omitempty"`
 	SSHKey  SecureBytes `json:"sshKey,omitempty"`
@@ -142,8 +145,6 @@ type OpenShiftClusterProperties struct {
 	UserAdminKubeconfig SecureBytes `json:"userAdminKubeconfig,omitempty"`
 
 	RegistryProfiles []*RegistryProfile `json:"registryProfiles,omitempty"`
-
-	ImageRegistryStorageAccountName string `json:"imageRegistryStorageAccountName,omitempty"`
 }
 
 // ProvisioningState represents a provisioning state
@@ -168,14 +169,31 @@ func (t ProvisioningState) String() string {
 	return string(t)
 }
 
+// FipsValidatedModules determines if FIPS is used.
+type FipsValidatedModules string
+
+// FipsValidatedModules constants.
+const (
+	FipsValidatedModulesEnabled  FipsValidatedModules = "Enabled"
+	FipsValidatedModulesDisabled FipsValidatedModules = "Disabled"
+)
+
 // ClusterProfile represents a cluster profile.
 type ClusterProfile struct {
 	MissingFields
 
-	PullSecret      SecureString `json:"pullSecret,omitempty"`
-	Domain          string       `json:"domain,omitempty"`
-	Version         string       `json:"version,omitempty"`
-	ResourceGroupID string       `json:"resourceGroupId,omitempty"`
+	PullSecret           SecureString         `json:"pullSecret,omitempty"`
+	Domain               string               `json:"domain,omitempty"`
+	Version              string               `json:"version,omitempty"`
+	ResourceGroupID      string               `json:"resourceGroupId,omitempty"`
+	FipsValidatedModules FipsValidatedModules `json:"fipsValidatedModules,omitempty"`
+}
+
+// FeatureProfile represents a feature profile.
+type FeatureProfile struct {
+	MissingFields
+
+	GatewayEnabled bool `json:"gatewayEnabled,omitempty"`
 }
 
 // ConsoleProfile represents a console profile.
@@ -194,23 +212,25 @@ type ServicePrincipalProfile struct {
 	SPObjectID   string       `json:"spObjectId,omitempty"`
 }
 
-// SDNProvider
-type SDNProvider string
+// SoftwareDefinedNetwork
+type SoftwareDefinedNetwork string
 
 const (
-	SDNProviderOVNKubernetes SDNProvider = "OVNKubernetes"
-	SDNProviderOpenShiftSDN  SDNProvider = "OpenShiftSDN"
+	SoftwareDefinedNetworkOVNKubernetes SoftwareDefinedNetwork = "OVNKubernetes"
+	SoftwareDefinedNetworkOpenShiftSDN  SoftwareDefinedNetwork = "OpenShiftSDN"
 )
 
 // NetworkProfile represents a network profile
 type NetworkProfile struct {
 	MissingFields
 
-	PodCIDR     string      `json:"podCidr,omitempty"`
-	ServiceCIDR string      `json:"serviceCidr,omitempty"`
-	SDNProvider SDNProvider `json:"sdnProvider,omitempty"`
+	PodCIDR                string                 `json:"podCidr,omitempty"`
+	ServiceCIDR            string                 `json:"serviceCidr,omitempty"`
+	SoftwareDefinedNetwork SoftwareDefinedNetwork `json:"softwareDefinedNetwork,omitempty"`
 
 	APIServerPrivateEndpointIP string `json:"privateEndpointIp,omitempty"`
+	GatewayPrivateEndpointIP   string `json:"gatewayPrivateEndpointIp,omitempty"`
+	GatewayPrivateLinkID       string `json:"gatewayPrivateLinkId,omitempty"`
 }
 
 // EncryptionAtHost represents encryption at host.

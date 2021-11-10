@@ -9,29 +9,35 @@ import (
 	"net"
 	"strings"
 
-	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-07-01/network"
+	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-08-01/network"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/apparentlymart/go-cidr/cidr"
 
 	"github.com/Azure/ARO-RP/pkg/api"
-	"github.com/Azure/ARO-RP/pkg/env"
+	"github.com/Azure/ARO-RP/pkg/util/azureclient"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/network"
 )
+
+type Subnet struct {
+	ResourceID string
+	IsMaster   bool
+}
 
 type Manager interface {
 	Get(ctx context.Context, subnetID string) (*mgmtnetwork.Subnet, error)
 	GetHighestFreeIP(ctx context.Context, subnetID string) (string, error)
 	CreateOrUpdate(ctx context.Context, subnetID string, subnet *mgmtnetwork.Subnet) error
 }
-
 type manager struct {
-	subnets network.SubnetsClient
+	subnets         network.SubnetsClient
+	virtualNetworks network.VirtualNetworksClient
 }
 
-func NewManager(env env.Core, subscriptionID string, spAuthorizer autorest.Authorizer) Manager {
+func NewManager(environment *azureclient.AROEnvironment, subscriptionID string, spAuthorizer autorest.Authorizer) Manager {
 	return &manager{
-		subnets: network.NewSubnetsClient(env.Environment(), subscriptionID, spAuthorizer),
+		subnets:         network.NewSubnetsClient(environment, subscriptionID, spAuthorizer),
+		virtualNetworks: network.NewVirtualNetworksClient(environment, subscriptionID, spAuthorizer),
 	}
 }
 

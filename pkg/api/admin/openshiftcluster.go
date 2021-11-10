@@ -29,26 +29,28 @@ type OpenShiftCluster struct {
 
 // OpenShiftClusterProperties represents an OpenShift cluster's properties.
 type OpenShiftClusterProperties struct {
-	ArchitectureVersion     ArchitectureVersion     `json:"architectureVersion"` // ArchitectureVersion is int so 0 is valid value to be returned
-	ProvisioningState       ProvisioningState       `json:"provisioningState,omitempty"`
-	LastProvisioningState   ProvisioningState       `json:"lastProvisioningState,omitempty"`
-	FailedProvisioningState ProvisioningState       `json:"failedProvisioningState,omitempty"`
-	LastAdminUpdateError    string                  `json:"lastAdminUpdateError,omitempty"`
-	CreatedAt               time.Time               `json:"createdAt,omitempty"`
-	CreatedBy               string                  `json:"createdBy,omitempty"`
-	ProvisionedBy           string                  `json:"provisionedBy,omitempty"`
-	ClusterProfile          ClusterProfile          `json:"clusterProfile,omitempty"`
-	ConsoleProfile          ConsoleProfile          `json:"consoleProfile,omitempty"`
-	ServicePrincipalProfile ServicePrincipalProfile `json:"servicePrincipalProfile,omitempty"`
-	NetworkProfile          NetworkProfile          `json:"networkProfile,omitempty"`
-	MasterProfile           MasterProfile           `json:"masterProfile,omitempty"`
-	WorkerProfiles          []WorkerProfile         `json:"workerProfiles,omitempty"`
-	APIServerProfile        APIServerProfile        `json:"apiserverProfile,omitempty"`
-	IngressProfiles         []IngressProfile        `json:"ingressProfiles,omitempty"`
-	Install                 *Install                `json:"install,omitempty"`
-	StorageSuffix           string                  `json:"storageSuffix,omitempty"`
-	RegistryProfiles        []RegistryProfile       `json:"registryProfiles,omitempty"`
-	InfraID                 string                  `json:"infraId,omitempty"`
+	ArchitectureVersion             ArchitectureVersion     `json:"architectureVersion"` // ArchitectureVersion is int so 0 is valid value to be returned
+	ProvisioningState               ProvisioningState       `json:"provisioningState,omitempty"`
+	LastProvisioningState           ProvisioningState       `json:"lastProvisioningState,omitempty"`
+	FailedProvisioningState         ProvisioningState       `json:"failedProvisioningState,omitempty"`
+	LastAdminUpdateError            string                  `json:"lastAdminUpdateError,omitempty"`
+	CreatedAt                       time.Time               `json:"createdAt,omitempty"`
+	CreatedBy                       string                  `json:"createdBy,omitempty"`
+	ProvisionedBy                   string                  `json:"provisionedBy,omitempty"`
+	ClusterProfile                  ClusterProfile          `json:"clusterProfile,omitempty"`
+	FeatureProfile                  FeatureProfile          `json:"featureProfile,omitempty"`
+	ConsoleProfile                  ConsoleProfile          `json:"consoleProfile,omitempty"`
+	ServicePrincipalProfile         ServicePrincipalProfile `json:"servicePrincipalProfile,omitempty"`
+	NetworkProfile                  NetworkProfile          `json:"networkProfile,omitempty"`
+	MasterProfile                   MasterProfile           `json:"masterProfile,omitempty"`
+	WorkerProfiles                  []WorkerProfile         `json:"workerProfiles,omitempty"`
+	APIServerProfile                APIServerProfile        `json:"apiserverProfile,omitempty"`
+	IngressProfiles                 []IngressProfile        `json:"ingressProfiles,omitempty"`
+	Install                         *Install                `json:"install,omitempty"`
+	StorageSuffix                   string                  `json:"storageSuffix,omitempty"`
+	RegistryProfiles                []RegistryProfile       `json:"registryProfiles,omitempty"`
+	ImageRegistryStorageAccountName string                  `json:"imageRegistryStorageAccountName,omitempty"`
+	InfraID                         string                  `json:"infraId,omitempty"`
 }
 
 // ProvisioningState represents a provisioning state.
@@ -64,11 +66,26 @@ const (
 	ProvisioningStateFailed        ProvisioningState = "Failed"
 )
 
+// FipsValidatedModules determines if FIPS is used.
+type FipsValidatedModules string
+
+// FipsValidatedModules constants.
+const (
+	FipsValidatedModulesEnabled  FipsValidatedModules = "Enabled"
+	FipsValidatedModulesDisabled FipsValidatedModules = "Disabled"
+)
+
 // ClusterProfile represents a cluster profile.
 type ClusterProfile struct {
-	Domain          string `json:"domain,omitempty"`
-	Version         string `json:"version,omitempty"`
-	ResourceGroupID string `json:"resourceGroupId,omitempty"`
+	Domain               string               `json:"domain,omitempty"`
+	Version              string               `json:"version,omitempty"`
+	ResourceGroupID      string               `json:"resourceGroupId,omitempty"`
+	FipsValidatedModules FipsValidatedModules `json:"fipsValidatedModules,omitempty"`
+}
+
+// FeatureProfile represents a feature profile.
+type FeatureProfile struct {
+	GatewayEnabled bool `json:"gatewayEnabled,omitempty" mutable:"true"`
 }
 
 // ConsoleProfile represents a console profile.
@@ -82,23 +99,25 @@ type ServicePrincipalProfile struct {
 	SPObjectID string `json:"spObjectId,omitempty"`
 }
 
-// SDNProvider constants.
-type SDNProvider string
+// SoftwareDefinedNetwork constants.
+type SoftwareDefinedNetwork string
 
 const (
-	SDNProviderOVNKubernetes SDNProvider = "OVNKubernetes"
-	SDNProviderOpenShiftSDN  SDNProvider = "OpenShiftSDN"
+	SoftwareDefinedNetworkOVNKubernetes SoftwareDefinedNetwork = "OVNKubernetes"
+	SoftwareDefinedNetworkOpenShiftSDN  SoftwareDefinedNetwork = "OpenShiftSDN"
 )
 
 // NetworkProfile represents a network profile.
 type NetworkProfile struct {
-	// The SDNProvider to use when installing the cluster.
-	SDNProvider SDNProvider `json:"sdnProvider,omitempty"`
+	// The software defined network (SDN) to use when installing the cluster.
+	SoftwareDefinedNetwork SoftwareDefinedNetwork `json:"softwareDefinedNetwork,omitempty"`
 
 	PodCIDR     string `json:"podCidr,omitempty"`
 	ServiceCIDR string `json:"serviceCidr,omitempty"`
 
 	APIServerPrivateEndpointIP string `json:"privateEndpointIp,omitempty"`
+	GatewayPrivateEndpointIP   string `json:"gatewayPrivateEndpointIp,omitempty"`
+	GatewayPrivateLinkID       string `json:"gatewayPrivateLinkId,omitempty"`
 }
 
 // EncryptionAtHost represents encryption at host state

@@ -52,7 +52,7 @@ func acceptableNames(path string) []string {
 		return []string{"mgmtredhatopenshift" + strings.ReplaceAll(m[1], "-", "")}
 	}
 
-	m = regexp.MustCompile(`^github\.com/Azure/ARO-RP/pkg/(dbtoken|deploy|mirror|monitor|operator|portal)$`).FindStringSubmatch(path)
+	m = regexp.MustCompile(`^github\.com/Azure/ARO-RP/pkg/(dbtoken|deploy|gateway|mirror|monitor|operator|portal)$`).FindStringSubmatch(path)
 	if m != nil {
 		return []string{"", "pkg" + m[1]}
 	}
@@ -62,7 +62,7 @@ func acceptableNames(path string) []string {
 		return []string{"redhatopenshift" + strings.ReplaceAll(m[1], "-", "")}
 	}
 
-	m = regexp.MustCompile(`^github\.com/Azure/ARO-RP/pkg/util/(log|pem|tls)$`).FindStringSubmatch(path)
+	m = regexp.MustCompile(`^github\.com/Azure/ARO-RP/pkg/util/(log|net|pem|tls)$`).FindStringSubmatch(path)
 	if m != nil {
 		return []string{"util" + m[1]}
 	}
@@ -114,6 +114,8 @@ func acceptableNames(path string) []string {
 		return []string{"dbmetrics"}
 	case "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1":
 		return []string{"arov1alpha1"}
+	case "github.com/Azure/ARO-RP/pkg/operator/apis/preview.aro.openshift.io/v1alpha1":
+		return []string{"aropreviewv1alpha1"}
 	case "github.com/Azure/ARO-RP/pkg/operator/clientset/versioned":
 		return []string{"aroclient"}
 	case "github.com/Azure/ARO-RP/pkg/operator/clientset/versioned/fake":
@@ -122,8 +124,12 @@ func acceptableNames(path string) []string {
 		return []string{"utildiscovery"}
 	case "github.com/Azure/ARO-RP/pkg/util/namespace":
 		return []string{"", "utilnamespace"}
+	case "github.com/Azure/ARO-RP/pkg/util/recover":
+		return []string{"", "utilrecover"}
 	case "github.com/Azure/ARO-RP/test/database":
 		return []string{"testdatabase"}
+	case "github.com/Azure/ARO-RP/test/util/dynamichelper":
+		return []string{"testdynamichelper"}
 	case "github.com/Azure/ARO-RP/test/util/log":
 		return []string{"testlog"}
 	case "github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac":
@@ -150,10 +156,16 @@ func acceptableNames(path string) []string {
 		return []string{"mcofake"}
 	case "github.com/openshift/machine-config-operator/pkg/generated/clientset/versioned/typed/machineconfiguration.openshift.io/v1":
 		return []string{"mcoclientv1"}
+	case "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake":
+		return []string{"extensionsfake"}
 	case "github.com/openshift/installer/pkg/asset/installconfig/azure":
 		return []string{"icazure"}
 	case "github.com/openshift/installer/pkg/types/azure":
 		return []string{"azuretypes"}
+	case "github.com/coreos/stream-metadata-go/arch":
+		return []string{"coreosarch"}
+	case "github.com/openshift/installer/pkg/rhcos":
+		return []string{"rhcospkg"}
 	case "golang.org/x/crypto/ssh":
 		return []string{"", "cryptossh"}
 	case "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1":
@@ -164,6 +176,8 @@ func acceptableNames(path string) []string {
 		return []string{"extensionsclient"}
 	case "k8s.io/apimachinery/pkg/api/errors":
 		return []string{"kerrors"}
+	case "k8s.io/apimachinery/pkg/runtime":
+		return []string{"kruntime"}
 	case "k8s.io/apimachinery/pkg/apis/meta/v1":
 		return []string{"metav1"}
 	case "k8s.io/apimachinery/pkg/runtime/serializer/json":

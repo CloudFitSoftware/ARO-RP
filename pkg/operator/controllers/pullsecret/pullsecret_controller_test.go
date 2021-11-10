@@ -9,11 +9,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/operator-framework/operator-sdk/pkg/status"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	kruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	ktesting "k8s.io/client-go/testing"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,17 +58,16 @@ func TestPullSecretReconciler(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		request        ctrl.Request
-		fakecli        *fake.Clientset
-		arocli         *arofake.Clientset
-		wantConditions []status.Condition
-		wantKeys       []string
-		wantErr        bool
-		want           string
-		wantCreated    bool
-		wantDeleted    bool
-		wantUpdated    bool
+		name        string
+		request     ctrl.Request
+		fakecli     *fake.Clientset
+		arocli      *arofake.Clientset
+		wantKeys    []string
+		wantErr     bool
+		want        string
+		wantCreated bool
+		wantDeleted bool
+		wantUpdated bool
 	}{
 		{
 			name: "deleted pull secret",
@@ -208,21 +206,21 @@ func TestPullSecretReconciler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.fakecli.PrependReactor("create", "secrets", func(action ktesting.Action) (handled bool, ret runtime.Object, err error) {
+			tt.fakecli.PrependReactor("create", "secrets", func(action ktesting.Action) (handled bool, ret kruntime.Object, err error) {
 				if !tt.wantCreated {
 					t.Fatal("Unexpected create")
 				}
 				return false, nil, nil
 			})
 
-			tt.fakecli.PrependReactor("delete", "secrets", func(action ktesting.Action) (handled bool, ret runtime.Object, err error) {
+			tt.fakecli.PrependReactor("delete", "secrets", func(action ktesting.Action) (handled bool, ret kruntime.Object, err error) {
 				if !tt.wantDeleted {
 					t.Fatalf("Unexpected delete")
 				}
 				return false, nil, nil
 			})
 
-			tt.fakecli.PrependReactor("update", "secrets", func(action ktesting.Action) (handled bool, ret runtime.Object, err error) {
+			tt.fakecli.PrependReactor("update", "secrets", func(action ktesting.Action) (handled bool, ret kruntime.Object, err error) {
 				if !tt.wantUpdated {
 					t.Fatalf("Unexpected update")
 				}

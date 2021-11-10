@@ -89,7 +89,6 @@ questions or comments.
       aro-operator-master.openshift-azure-operator:8080, to avoid the
       `AlertmanagerReceiversNotConfigured` warning.
 
-    * azurensg: Ensures that the Network Security Groups (NSGs) are correct, and updates the Azure Machine Provider spec with subnet, vnet, and Network Resource Group.
 
     * checker: Watches the `Cluster` resource for changes and updates conditions
       of the resource based on checks mentioned below
@@ -113,6 +112,8 @@ questions or comments.
       vm type, vm image, disk size, three master nodes exist, and the number of worker nodes
       match the desired worker replicas
 
+    * machineset: Ensures that a minimum of two worker replicas are met.
+
     * monitoring: Ensures that the OpenShift monitoring configuration in the `openshift-monitoring` namespace is consistent and immutable.
 
     * node: Force deletes pods when a node fails to drain for 1 hour.  It should clear up any pods that refuse to be evicted on a drain due to violating a pod disruption budget.
@@ -125,6 +126,8 @@ questions or comments.
 
     * routefix: Ensures all the routefix resources in the namespace
       `openshift-azure-routefix` remain on the cluster.
+
+    * subnets: Ensures that the Network Security Groups (NSGs) are correct, and updates the Azure Machine Provider spec with subnet, vnet, and Network Resource Group.
 
     * workaround: Applies a set of temporay workarounds to the ARO cluster.
 
@@ -183,4 +186,4 @@ questions or comments.
 
 * https://docs.microsoft.com/en-gb/rest/api/cosmos-db
 
-* https://github.com/mjudeikis/go-cosmosdb
+* https://github.com/jewzaam/go-cosmosdb

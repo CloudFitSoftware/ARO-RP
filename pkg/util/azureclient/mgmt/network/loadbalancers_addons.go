@@ -6,7 +6,7 @@ package network
 import (
 	"context"
 
-	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-07-01/network"
+	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-08-01/network"
 )
 
 // LoadBalancersClientAddons contains addons for Azure LoadBalancersClient
@@ -15,7 +15,7 @@ type LoadBalancersClientAddons interface {
 }
 
 func (c *loadBalancersClient) CreateOrUpdateAndWait(ctx context.Context, resourceGroupName string, loadBalancerName string, parameters mgmtnetwork.LoadBalancer) error {
-	future, err := c.CreateOrUpdate(ctx, resourceGroupName, loadBalancerName, parameters)
+	future, err := c.LoadBalancersClient.CreateOrUpdate(ctx, resourceGroupName, loadBalancerName, parameters)
 	if err != nil {
 		return err
 	}

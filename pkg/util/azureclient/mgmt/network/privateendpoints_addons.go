@@ -6,7 +6,7 @@ package network
 import (
 	"context"
 
-	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-07-01/network"
+	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-08-01/network"
 )
 
 // PrivateEndpointsClientAddons contains addons for PrivateEndpointsClient
@@ -16,7 +16,7 @@ type PrivateEndpointsClientAddons interface {
 }
 
 func (c *privateEndpointsClient) CreateOrUpdateAndWait(ctx context.Context, resourceGroupName string, privateEndpointName string, parameters mgmtnetwork.PrivateEndpoint) error {
-	future, err := c.CreateOrUpdate(ctx, resourceGroupName, privateEndpointName, parameters)
+	future, err := c.PrivateEndpointsClient.CreateOrUpdate(ctx, resourceGroupName, privateEndpointName, parameters)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (c *privateEndpointsClient) CreateOrUpdateAndWait(ctx context.Context, reso
 }
 
 func (c *privateEndpointsClient) DeleteAndWait(ctx context.Context, resourceGroupName string, publicIPAddressName string) error {
-	future, err := c.Delete(ctx, resourceGroupName, publicIPAddressName)
+	future, err := c.PrivateEndpointsClient.Delete(ctx, resourceGroupName, publicIPAddressName)
 	if err != nil {
 		return err
 	}

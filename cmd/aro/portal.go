@@ -17,6 +17,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/database"
 	"github.com/Azure/ARO-RP/pkg/env"
 	"github.com/Azure/ARO-RP/pkg/metrics/statsd"
+	"github.com/Azure/ARO-RP/pkg/metrics/statsd/golang"
 	pkgportal "github.com/Azure/ARO-RP/pkg/portal"
 	"github.com/Azure/ARO-RP/pkg/proxy"
 	"github.com/Azure/ARO-RP/pkg/util/encryption"
@@ -74,6 +75,13 @@ func portal(ctx context.Context, log *logrus.Entry, audit *logrus.Entry) error {
 
 	m := statsd.New(ctx, log.WithField("component", "portal"), _env, os.Getenv("MDM_ACCOUNT"), os.Getenv("MDM_NAMESPACE"))
 
+	g, err := golang.NewMetrics(log.WithField("component", "portal"), m)
+	if err != nil {
+		return err
+	}
+
+	go g.Run()
+
 	// TODO: should not be using the service keyvault here
 	serviceKeyvaultURI, err := keyvault.URI(_env, env.ServiceKeyvaultSuffix)
 	if err != nil {
@@ -82,12 +90,7 @@ func portal(ctx context.Context, log *logrus.Entry, audit *logrus.Entry) error {
 
 	serviceKeyvault := keyvault.NewManager(msiKVAuthorizer, serviceKeyvaultURI)
 
-	key, err := serviceKeyvault.GetBase64Secret(ctx, env.EncryptionSecretName)
-	if err != nil {
-		return err
-	}
-
-	aead, err := encryption.NewXChaCha20Poly1305(ctx, key)
+	aead, err := encryption.NewMulti(ctx, serviceKeyvault, env.EncryptionSecretV2Name, env.EncryptionSecretName)
 	if err != nil {
 		return err
 	}
@@ -129,12 +132,12 @@ func portal(ctx context.Context, log *logrus.Entry, audit *logrus.Entry) error {
 		return err
 	}
 
-	sessionKey, err := portalKeyvault.GetBase64Secret(ctx, env.PortalServerSessionKeySecretName)
+	sessionKey, err := portalKeyvault.GetBase64Secret(ctx, env.PortalServerSessionKeySecretName, "")
 	if err != nil {
 		return err
 	}
 
-	b, err := portalKeyvault.GetBase64Secret(ctx, env.PortalServerSSHKeySecretName)
+	b, err := portalKeyvault.GetBase64Secret(ctx, env.PortalServerSSHKeySecretName, "")
 	if err != nil {
 		return err
 	}
@@ -176,7 +179,7 @@ func portal(ctx context.Context, log *logrus.Entry, audit *logrus.Entry) error {
 
 	log.Print("listening")
 
-	p := pkgportal.NewPortal(_env, audit, log.WithField("component", "portal"), log.WithField("component", "portal-access"), l, sshl, verifier, hostname, servingKey, servingCerts, clientID, clientKey, clientCerts, sessionKey, sshKey, groupIDs, elevatedGroupIDs, dbOpenShiftClusters, dbPortal, dialer)
+	p := pkgportal.NewPortal(_env, audit, log.WithField("component", "portal"), log.WithField("component", "portal-access"), l, sshl, verifier, hostname, servingKey, servingCerts, clientID, clientKey, clientCerts, sessionKey, sshKey, groupIDs, elevatedGroupIDs, dbOpenShiftClusters, dbPortal, dialer, m)
 
 	return p.Run(ctx)
 }

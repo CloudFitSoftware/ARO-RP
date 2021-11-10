@@ -6,7 +6,7 @@ package network
 import (
 	"context"
 
-	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-07-01/network"
+	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-08-01/network"
 	"github.com/Azure/go-autorest/autorest"
 
 	"github.com/Azure/ARO-RP/pkg/util/azureclient"
@@ -14,9 +14,7 @@ import (
 
 // VirtualNetworksClient is a minimal interface for azure VirtualNetworksClient
 type VirtualNetworksClient interface {
-	CreateOrUpdate(ctx context.Context, resourceGroupName string, virtualNetworkName string, parameters mgmtnetwork.VirtualNetwork) (result mgmtnetwork.VirtualNetworksCreateOrUpdateFuture, err error)
 	Get(ctx context.Context, resourceGroupName string, virtualNetworkName string, expand string) (vnet mgmtnetwork.VirtualNetwork, err error)
-	VirtualNetworksClientAddons
 }
 
 type virtualNetworksClient struct {

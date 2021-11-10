@@ -38,16 +38,17 @@ const (
 	RPServerSecretName               = "rp-server"
 	ClusterLoggingSecretName         = "cluster-mdsd"
 	EncryptionSecretName             = "encryption-key"
+	EncryptionSecretV2Name           = "encryption-key-v2"
 	FrontendEncryptionSecretName     = "fe-encryption-key"
+	FrontendEncryptionSecretV2Name   = "fe-encryption-key-v2"
 	DBTokenServerSecretName          = "dbtoken-server"
-	RPLoggingSecretName              = "rp-mdsd"
-	RPMonitoringSecretName           = "rp-mdm"
 	PortalServerSecretName           = "portal-server"
 	PortalServerClientSecretName     = "portal-client"
 	PortalServerSessionKeySecretName = "portal-session-key"
 	PortalServerSSHKeySecretName     = "portal-sshkey"
 	ClusterKeyvaultSuffix            = "-cls"
 	DBTokenKeyvaultSuffix            = "-dbt"
+	GatewayKeyvaultSuffix            = "-gwy"
 	PortalKeyvaultSuffix             = "-por"
 	ServiceKeyvaultSuffix            = "-svc"
 	RPPrivateEndpointPrefix          = "rp-pe-"
@@ -80,6 +81,8 @@ type Interface interface {
 	FPAuthorizer(string, string) (refreshable.Authorizer, error)
 	FPClientID() string
 	Listen() (net.Listener, error)
+	GatewayDomains() []string
+	GatewayResourceGroup() string
 	ServiceKeyvault() keyvault.Manager
 	ACRResourceID() string
 	ACRDomain() string
@@ -90,12 +93,12 @@ type Interface interface {
 	VMSku(vmSize string) (*mgmtcompute.ResourceSku, error)
 }
 
-func NewEnv(ctx context.Context, stop <-chan struct{}, log *logrus.Entry) (Interface, error) {
+func NewEnv(ctx context.Context, log *logrus.Entry) (Interface, error) {
 	if IsLocalDevelopmentMode() {
-		return newDev(ctx, stop, log)
+		return newDev(ctx, log)
 	}
 
-	return newProd(ctx, stop, log)
+	return newProd(ctx, log)
 }
 
 func IsLocalDevelopmentMode() bool {

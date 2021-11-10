@@ -14,7 +14,7 @@ func validOpenShiftClusterDocument() *OpenShiftClusterDocument {
 		OpenShiftCluster: &OpenShiftCluster{
 			Properties: OpenShiftClusterProperties{
 				NetworkProfile: NetworkProfile{
-					SDNProvider: SDNProviderOpenShiftSDN,
+					SoftwareDefinedNetwork: SoftwareDefinedNetworkOpenShiftSDN,
 				},
 				MasterProfile: MasterProfile{
 					EncryptionAtHost: EncryptionAtHostDisabled,
@@ -23,6 +23,9 @@ func validOpenShiftClusterDocument() *OpenShiftClusterDocument {
 					{
 						EncryptionAtHost: EncryptionAtHostDisabled,
 					},
+				},
+				ClusterProfile: ClusterProfile{
+					FipsValidatedModules: FipsValidatedModulesDisabled,
 				},
 			},
 		},
@@ -48,18 +51,18 @@ func TestSetDefaults(t *testing.T) {
 				return validOpenShiftClusterDocument()
 			},
 			input: func(base *OpenShiftClusterDocument) {
-				base.OpenShiftCluster.Properties.NetworkProfile.SDNProvider = ""
+				base.OpenShiftCluster.Properties.NetworkProfile.SoftwareDefinedNetwork = ""
 			},
 		},
 		{
 			name: "preserve SDN",
 			want: func() *OpenShiftClusterDocument {
 				doc := validOpenShiftClusterDocument()
-				doc.OpenShiftCluster.Properties.NetworkProfile.SDNProvider = SDNProviderOVNKubernetes
+				doc.OpenShiftCluster.Properties.NetworkProfile.SoftwareDefinedNetwork = SoftwareDefinedNetworkOVNKubernetes
 				return doc
 			},
 			input: func(base *OpenShiftClusterDocument) {
-				base.OpenShiftCluster.Properties.NetworkProfile.SDNProvider = SDNProviderOVNKubernetes
+				base.OpenShiftCluster.Properties.NetworkProfile.SoftwareDefinedNetwork = SoftwareDefinedNetworkOVNKubernetes
 			},
 		},
 		{
@@ -80,6 +83,26 @@ func TestSetDefaults(t *testing.T) {
 			},
 			input: func(base *OpenShiftClusterDocument) {
 				base.OpenShiftCluster.Properties.MasterProfile.EncryptionAtHost = EncryptionAtHostEnabled
+			},
+		},
+		{
+			name: "default fips validated modules",
+			want: func() *OpenShiftClusterDocument {
+				return validOpenShiftClusterDocument()
+			},
+			input: func(base *OpenShiftClusterDocument) {
+				base.OpenShiftCluster.Properties.ClusterProfile.FipsValidatedModules = ""
+			},
+		},
+		{
+			name: "preserve fips validated modules",
+			want: func() *OpenShiftClusterDocument {
+				doc := validOpenShiftClusterDocument()
+				doc.OpenShiftCluster.Properties.ClusterProfile.FipsValidatedModules = FipsValidatedModulesEnabled
+				return doc
+			},
+			input: func(base *OpenShiftClusterDocument) {
+				base.OpenShiftCluster.Properties.ClusterProfile.FipsValidatedModules = FipsValidatedModulesEnabled
 			},
 		},
 	} {

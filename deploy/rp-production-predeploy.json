@@ -47,7 +47,8 @@
                 "objectId": "[parameters('rpServicePrincipalId')]",
                 "permissions": {
                     "secrets": [
-                        "get"
+                        "get",
+                        "list"
                     ]
                 }
             }
@@ -75,6 +76,9 @@
             "defaultValue": []
         },
         "fpServicePrincipalId": {
+            "type": "string"
+        },
+        "gatewayResourceGroupName": {
             "type": "string"
         },
         "keyvaultPrefix": {
@@ -110,6 +114,45 @@
                         "properties": {
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "10.0.8.0/24",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound"
+                        },
+                        "name": "dbtoken_in_gateway_445"
+                    },
+                    {
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8445",
+                            "sourceAddressPrefix": "10.0.8.0/24",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 141,
+                            "direction": "Inbound"
+                        },
+                        "name": "dbtoken_in_gateway_8445"
+                    },
+                    {
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "10.0.8.0/24",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 145,
+                            "direction": "Inbound"
+                        },
+                        "name": "deny_in_gateway"
+                    },
+                    {
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
                             "destinationPortRange": "443",
                             "sourceAddressPrefixes": "[parameters('rpNsgSourceAddressPrefixes')]",
                             "destinationAddressPrefix": "*",
@@ -125,7 +168,7 @@
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[resourceGroup().location]",
             "condition": "[parameters('deployNSGs')]",
-            "apiVersion": "2019-07-01"
+            "apiVersion": "2020-08-01"
         },
         {
             "properties": {},
@@ -133,9 +176,83 @@
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[resourceGroup().location]",
             "condition": "[parameters('deployNSGs')]",
-            "apiVersion": "2019-07-01"
+            "apiVersion": "2020-08-01"
         },
         {
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/24"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-nsg')]",
+                                "tags": null
+                            },
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.KeyVault",
+                                    "locations": [
+                                        "*"
+                                    ]
+                                },
+                                {
+                                    "service": "Microsoft.AzureCosmosDB",
+                                    "locations": [
+                                        "*"
+                                    ]
+                                }
+                            ]
+                        },
+                        "name": "rp-subnet"
+                    }
+                ]
+            },
+            "name": "rp-vnet",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2020-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-nsg')]"
+            ]
+        },
+        {
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.4.0/22"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "properties": {
+                            "addressPrefix": "10.0.4.0/22",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-pe-nsg')]",
+                                "tags": null
+                            },
+                            "privateEndpointNetworkPolicies": "Disabled"
+                        },
+                        "name": "rp-pe-subnet"
+                    }
+                ]
+            },
+            "name": "rp-pe-vnet-001",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2020-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-pe-nsg')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('keyvaultPrefix'), '-cls')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
@@ -145,12 +262,12 @@
                 "accessPolicies": "[concat(variables('clusterKeyvaultAccessPolicies'), parameters('extraClusterKeyvaultAccessPolicies'))]",
                 "enableSoftDelete": true
             },
-            "name": "[concat(parameters('keyvaultPrefix'), '-cls')]",
-            "type": "Microsoft.KeyVault/vaults",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
+            "apiVersion": "2019-09-01"
         },
         {
+            "name": "[concat(parameters('keyvaultPrefix'), '-dbt')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
@@ -160,12 +277,12 @@
                 "accessPolicies": "[concat(variables('dbTokenKeyvaultAccessPolicies'), parameters('extraDBTokenKeyvaultAccessPolicies'))]",
                 "enableSoftDelete": true
             },
-            "name": "[concat(parameters('keyvaultPrefix'), '-dbt')]",
-            "type": "Microsoft.KeyVault/vaults",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
+            "apiVersion": "2019-09-01"
         },
         {
+            "name": "[concat(parameters('keyvaultPrefix'), '-por')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
@@ -175,12 +292,12 @@
                 "accessPolicies": "[concat(variables('portalKeyvaultAccessPolicies'), parameters('extraPortalKeyvaultAccessPolicies'))]",
                 "enableSoftDelete": true
             },
-            "name": "[concat(parameters('keyvaultPrefix'), '-por')]",
-            "type": "Microsoft.KeyVault/vaults",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
+            "apiVersion": "2019-09-01"
         },
         {
+            "name": "[concat(parameters('keyvaultPrefix'), '-svc')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
@@ -190,10 +307,7 @@
                 "accessPolicies": "[concat(variables('serviceKeyvaultAccessPolicies'), parameters('extraServiceKeyvaultAccessPolicies'))]",
                 "enableSoftDelete": true
             },
-            "name": "[concat(parameters('keyvaultPrefix'), '-svc')]",
-            "type": "Microsoft.KeyVault/vaults",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
+            "apiVersion": "2019-09-01"
         }
     ]
 }

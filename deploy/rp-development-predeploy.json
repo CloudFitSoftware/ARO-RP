@@ -51,16 +51,76 @@
             "name": "rp-nsg",
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-07-01"
+            "apiVersion": "2020-08-01"
         },
         {
             "properties": {},
             "name": "rp-pe-nsg",
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2019-07-01"
+            "apiVersion": "2020-08-01"
         },
         {
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/24"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-nsg')]",
+                                "tags": null
+                            }
+                        },
+                        "name": "rp-subnet"
+                    }
+                ]
+            },
+            "name": "rp-vnet",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2020-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-nsg')]"
+            ]
+        },
+        {
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.4.0/22"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "properties": {
+                            "addressPrefix": "10.0.4.0/22",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-pe-nsg')]",
+                                "tags": null
+                            },
+                            "privateEndpointNetworkPolicies": "Disabled"
+                        },
+                        "name": "rp-pe-subnet"
+                    }
+                ]
+            },
+            "name": "rp-pe-vnet-001",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2020-08-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-pe-nsg')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('keyvaultPrefix'), '-cls')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
@@ -96,53 +156,12 @@
                 ],
                 "enableSoftDelete": true
             },
-            "name": "[concat(parameters('keyvaultPrefix'), '-cls')]",
-            "type": "Microsoft.KeyVault/vaults",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
+            "apiVersion": "2019-09-01"
         },
         {
-            "properties": {
-                "tenantId": "[subscription().tenantId]",
-                "sku": {
-                    "family": "A",
-                    "name": "standard"
-                },
-                "accessPolicies": [
-                    {
-                        "tenantId": "[subscription().tenantId]",
-                        "objectId": "[parameters('rpServicePrincipalId')]",
-                        "permissions": {
-                            "secrets": [
-                                "get"
-                            ]
-                        }
-                    },
-                    {
-                        "tenantId": "[subscription().tenantId]",
-                        "objectId": "[parameters('adminObjectId')]",
-                        "permissions": {
-                            "secrets": [
-                                "set",
-                                "list"
-                            ],
-                            "certificates": [
-                                "delete",
-                                "get",
-                                "import",
-                                "list"
-                            ]
-                        }
-                    }
-                ],
-                "enableSoftDelete": true
-            },
             "name": "[concat(parameters('keyvaultPrefix'), '-dbt')]",
             "type": "Microsoft.KeyVault/vaults",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
-        },
-        {
             "properties": {
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
@@ -178,12 +197,12 @@
                 ],
                 "enableSoftDelete": true
             },
+            "apiVersion": "2019-09-01"
+        },
+        {
             "name": "[concat(parameters('keyvaultPrefix'), '-por')]",
             "type": "Microsoft.KeyVault/vaults",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
-        },
-        {
             "properties": {
                 "tenantId": "[subscription().tenantId]",
                 "sku": {
@@ -197,6 +216,48 @@
                         "permissions": {
                             "secrets": [
                                 "get"
+                            ]
+                        }
+                    },
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('adminObjectId')]",
+                        "permissions": {
+                            "secrets": [
+                                "set",
+                                "list"
+                            ],
+                            "certificates": [
+                                "delete",
+                                "get",
+                                "import",
+                                "list"
+                            ]
+                        }
+                    }
+                ],
+                "enableSoftDelete": true
+            },
+            "apiVersion": "2019-09-01"
+        },
+        {
+            "name": "[concat(parameters('keyvaultPrefix'), '-svc')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "family": "A",
+                    "name": "standard"
+                },
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('rpServicePrincipalId')]",
+                        "permissions": {
+                            "secrets": [
+                                "get",
+                                "list"
                             ]
                         }
                     },
@@ -220,10 +281,7 @@
                 ],
                 "enableSoftDelete": true
             },
-            "name": "[concat(parameters('keyvaultPrefix'), '-svc')]",
-            "type": "Microsoft.KeyVault/vaults",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-10-01"
+            "apiVersion": "2019-09-01"
         }
     ]
 }

@@ -23,6 +23,7 @@ import (
 
 	arov1alpha1 "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/monitoring"
+	"github.com/Azure/ARO-RP/pkg/util/conditions"
 	"github.com/Azure/ARO-RP/pkg/util/ready"
 )
 
@@ -93,13 +94,13 @@ var _ = Describe("ARO Operator - Internet checking", func() {
 	Specify("the InternetReachable default list should all be reachable", func() {
 		co, err := clients.AROClusters.AroV1alpha1().Clusters().Get(context.Background(), "cluster", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(co.Status.Conditions.IsTrueFor(arov1alpha1.InternetReachableFromMaster)).To(BeTrue())
+		Expect(conditions.IsTrue(co.Status.Conditions, arov1alpha1.InternetReachableFromMaster)).To(BeTrue())
 	})
 
 	Specify("the InternetReachable default list should all be reachable from worker", func() {
 		co, err := clients.AROClusters.AroV1alpha1().Clusters().Get(context.Background(), "cluster", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(co.Status.Conditions.IsTrueFor(arov1alpha1.InternetReachableFromWorker)).To(BeTrue())
+		Expect(conditions.IsTrue(co.Status.Conditions, arov1alpha1.InternetReachableFromWorker)).To(BeTrue())
 	})
 
 	Specify("custom invalid site shows not InternetReachable", func() {
@@ -124,8 +125,8 @@ var _ = Describe("ARO Operator - Internet checking", func() {
 			}
 
 			log.Debugf("ClusterStatus.Conditions %s", co.Status.Conditions)
-			return co.Status.Conditions.IsFalseFor(arov1alpha1.InternetReachableFromMaster) &&
-				co.Status.Conditions.IsFalseFor(arov1alpha1.InternetReachableFromWorker), nil
+			return conditions.IsFalse(co.Status.Conditions, arov1alpha1.InternetReachableFromMaster) &&
+				conditions.IsFalse(co.Status.Conditions, arov1alpha1.InternetReachableFromWorker), nil
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -261,7 +262,7 @@ var _ = Describe("ARO Operator - Conditions", func() {
 
 			valid := true
 			for _, condition := range arov1alpha1.ClusterChecksTypes() {
-				if !co.Status.Conditions.IsTrueFor(condition) {
+				if !conditions.IsTrue(co.Status.Conditions, condition) {
 					valid = false
 				}
 			}
@@ -270,5 +271,53 @@ var _ = Describe("ARO Operator - Conditions", func() {
 
 		err := wait.PollImmediate(30*time.Second, 15*time.Minute, clusterOperatorConditionsValid)
 		Expect(err).NotTo(HaveOccurred())
+	})
+})
+
+var _ = XDescribe("ARO Operator - MachineSet Controller", func() {
+	Specify("operator should maintain at least two worker replicas", func() {
+		ctx := context.Background()
+
+		// TODO: MSFT Billing expects that we only scale a single node (4 VMs).
+		// Need to work with billing pipeline to ensure we can run operator tests
+		skipIfNotInDevelopmentEnv()
+
+		instance, err := clients.AROClusters.AroV1alpha1().Clusters().Get(ctx, "cluster", metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		if !instance.Spec.Features.ReconcileMachineSet {
+			Skip("MachineSet Controller is not enabled, skipping this test")
+		}
+
+		mss, err := clients.MachineAPI.MachineV1beta1().MachineSets(machineSetsNamespace).List(ctx, metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(mss.Items).NotTo(BeEmpty())
+
+		// Zero all machinesets (avoid availability zone confusion)
+		for _, object := range mss.Items {
+			err = scale(object.Name, 0)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = waitForScale(object.Name)
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		// Re-count and assert that operator added back replicas
+		modifiedMachineSets, err := clients.MachineAPI.MachineV1beta1().MachineSets(machineSetsNamespace).List(ctx, metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		replicaCount := 0
+		for _, machineset := range modifiedMachineSets.Items {
+			if machineset.Spec.Replicas != nil {
+				replicaCount += int(*machineset.Spec.Replicas)
+			}
+		}
+		Expect(replicaCount).To(BeEquivalentTo(minSupportedReplicas))
+
+		// Restore previous state
+		for _, ms := range mss.Items {
+			err := scale(ms.Name, *ms.Spec.Replicas)
+			Expect(err).NotTo(HaveOccurred())
+		}
 	})
 })

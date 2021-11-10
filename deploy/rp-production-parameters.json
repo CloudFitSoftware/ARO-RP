@@ -56,10 +56,22 @@
         "disableCosmosDBFirewall": {
             "value": false
         },
+        "fluentbitImage": {
+            "value": ""
+        },
         "fpClientId": {
             "value": ""
         },
         "fpServicePrincipalId": {
+            "value": ""
+        },
+        "gatewayDomains": {
+            "value": ""
+        },
+        "gatewayResourceGroupName": {
+            "value": ""
+        },
+        "gatewayServicePrincipalId": {
             "value": ""
         },
         "ipRules": {
@@ -76,6 +88,21 @@
         },
         "mdsdEnvironment": {
             "value": ""
+        },
+        "nonZonalRegions": {
+            "value": [
+                "eastasia",
+                "centralindia",
+                "koreacentral",
+                "southcentralus",
+                "canadacentral",
+                "germanywestcentral",
+                "norwayeast",
+                "switzerlandnorth",
+                "brazilsouth",
+                "southafricanorth",
+                "northcentralus"
+            ]
         },
         "portalAccessGroupIds": {
             "value": ""
@@ -124,6 +151,9 @@
         },
         "vmSize": {
             "value": "Standard_D2s_v3"
+        },
+        "vmssCleanupEnabled": {
+            "value": true
         },
         "vmssName": {
             "value": ""

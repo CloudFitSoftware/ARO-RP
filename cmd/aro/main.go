@@ -23,6 +23,7 @@ func usage() {
 	fmt.Fprint(flag.CommandLine.Output(), "usage:\n")
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s dbtoken\n", os.Args[0])
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s deploy config.yaml location\n", os.Args[0])
+	fmt.Fprintf(flag.CommandLine.Output(), "  %s gateway\n", os.Args[0])
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s mirror [release_image...]\n", os.Args[0])
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s monitor\n", os.Args[0])
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s portal\n", os.Args[0])
@@ -41,6 +42,11 @@ func main() {
 	audit := utillog.GetAuditEntry()
 	log := utillog.GetLogger()
 
+	// TODO: Use `azuretypes.Platform.IsARO()` from github.com/openshift/installer/pkg/types/azure
+	if !platformIsAro {
+		log.Fatal("ARO-RP must be built, run, and tested with '-tags aro' to support github.com/openshift/installer, see https://github.com/openshift/installer/pull/4843/files")
+	}
+
 	go func() {
 		log.Warn(http.ListenAndServe("localhost:6060", nil))
 	}()
@@ -55,6 +61,9 @@ func main() {
 	case "deploy":
 		checkArgs(3)
 		err = deploy(ctx, log)
+	case "gateway":
+		checkArgs(1)
+		err = gateway(ctx, log)
 	case "mirror":
 		checkMinArgs(1)
 		err = mirror(ctx, log)

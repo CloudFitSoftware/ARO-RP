@@ -23,10 +23,11 @@ type Config struct {
 
 // RPConfig represents individual RP configuration
 type RPConfig struct {
-	Location            string         `json:"location,omitempty"`
-	SubscriptionID      string         `json:"subscriptionId,omitempty"`
-	RPResourceGroupName string         `json:"rpResourceGroupName,omitempty"`
-	Configuration       *Configuration `json:"configuration,omitempty"`
+	Location                 string         `json:"location,omitempty"`
+	SubscriptionID           string         `json:"subscriptionId,omitempty"`
+	GatewayResourceGroupName string         `json:"gatewayResourceGroupName,omitempty"`
+	RPResourceGroupName      string         `json:"rpResourceGroupName,omitempty"`
+	Configuration            *Configuration `json:"configuration,omitempty"`
 }
 
 // Configuration represents configuration structure
@@ -55,11 +56,19 @@ type Configuration struct {
 	ExtraClusterKeyvaultAccessPolicies []interface{} `json:"extraClusterKeyvaultAccessPolicies,omitempty" value:"required"`
 	ExtraDBTokenKeyvaultAccessPolicies []interface{} `json:"extraDBTokenKeyvaultAccessPolicies,omitempty" value:"required"`
 	ExtraCosmosDBIPs                   []string      `json:"extraCosmosDBIPs,omitempty"`
+	ExtraGatewayKeyvaultAccessPolicies []interface{} `json:"extraGatewayKeyvaultAccessPolicies,omitempty" value:"required"`
 	ExtraPortalKeyvaultAccessPolicies  []interface{} `json:"extraPortalKeyvaultAccessPolicies,omitempty" value:"required"`
 	ExtraServiceKeyvaultAccessPolicies []interface{} `json:"extraServiceKeyvaultAccessPolicies,omitempty" value:"required"`
+	FluentbitImage                     *string       `json:"fluentbitImage,omitempty" value:"required"`
 	FPClientID                         *string       `json:"fpClientId,omitempty" value:"required"`
 	FPServerCertCommonName             *string       `json:"fpServerCertCommonName,omitempty"`
 	FPServicePrincipalID               *string       `json:"fpServicePrincipalId,omitempty" value:"required"`
+	GatewayDomains                     []string      `json:"gatewayDomains,omitempty"`
+	GatewayFeatures                    []string      `json:"gatewayFeatures,omitempty"`
+	GatewayMDSDConfigVersion           *string       `json:"gatewayMdsdConfigVersion,omitempty" value:"required"`
+	GatewayStorageAccountDomain        *string       `json:"gatewayStorageAccountDomain,omitempty" value:"required"`
+	GatewayVMSize                      *string       `json:"gatewayVmSize,omitempty"`
+	GatewayVMSSCapacity                *int          `json:"gatewayVmssCapacity,omitempty"`
 	GlobalResourceGroupName            *string       `json:"globalResourceGroupName,omitempty" value:"required"`
 	GlobalResourceGroupLocation        *string       `json:"globalResourceGroupLocation,omitempty" value:"required"`
 	GlobalSubscriptionID               *string       `json:"globalSubscriptionId,omitempty" value:"required"`
@@ -67,6 +76,7 @@ type Configuration struct {
 	KeyvaultPrefix                     *string       `json:"keyvaultPrefix,omitempty" value:"required"`
 	MDMFrontendURL                     *string       `json:"mdmFrontendUrl,omitempty" value:"required"`
 	MDSDEnvironment                    *string       `json:"mdsdEnvironment,omitempty" value:"required"`
+	NonZonalRegions                    []string      `json:"nonZonalRegions,omitempty"`
 	PortalAccessGroupIDs               []string      `json:"portalAccessGroupIds,omitempty" value:"required"`
 	PortalClientID                     *string       `json:"portalClientId,omitempty" value:"required"`
 	PortalElevatedGroupIDs             []string      `json:"portalElevatedGroupIds,omitempty" value:"required"`
@@ -84,6 +94,7 @@ type Configuration struct {
 	SSHPublicKey                       *string       `json:"sshPublicKey,omitempty" value:"required"`
 	StorageAccountDomain               *string       `json:"storageAccountDomain,omitempty" value:"required"`
 	VMSize                             *string       `json:"vmSize,omitempty" value:"required"`
+	VMSSCleanupEnabled                 *bool         `json:"vmssCleanupEnabled,omitempty"`
 }
 
 // GetConfig return RP configuration from the file

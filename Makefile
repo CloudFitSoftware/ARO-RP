@@ -4,23 +4,28 @@ ARO_IMAGE ?= ${RP_IMAGE_ACR}.azurecr.io/aro:$(COMMIT)
 
 # fluentbit version must also be updated in RP code, see pkg/util/version/const.go
 FLUENTBIT_VERSION = 1.7.8-1
+AUTOREST_VERSION = 3.3.2
+AUTOREST_IMAGE = "quay.io/openshift-on-azure/autorest:${AUTOREST_VERSION}"
 
 ifneq ($(shell uname -s),Darwin)
     export CGO_CFLAGS=-Dgpgme_off_t=off_t
 endif
 
 build-all:
-	go build -tags containers_image_openpgp ./...
+	go build -tags aro,containers_image_openpgp ./...
 
 aro: generate
-	go build -tags containers_image_openpgp,codec.safe -ldflags "-X github.com/Azure/ARO-RP/pkg/util/version.GitCommit=$(COMMIT)" ./cmd/aro
+	go build -tags aro,containers_image_openpgp,codec.safe -ldflags "-X github.com/Azure/ARO-RP/pkg/util/version.GitCommit=$(COMMIT)" ./cmd/aro
+
+runlocal-rp:
+	go run -tags aro ./cmd/aro rp
 
 az: pyenv
 	. pyenv/bin/activate && \
 	cd python/az/aro && \
 	python3 ./setup.py bdist_egg && \
 	python3 ./setup.py bdist_wheel || true && \
-	rm -f ~/.azure/commandIndex.json # https://github.com/Azure/azure-cli/issues/1499
+	rm -f ~/.azure/commandIndex.json # https://github.com/Azure/azure-cli/issues/14997
 
 clean:
 	rm -rf python/az/aro/{aro.egg-info,build,dist} aro
@@ -28,7 +33,7 @@ clean:
 	find python -type d -name __pycache__ -delete
 
 client: generate
-	hack/build-client.sh 2020-04-30 2021-09-01-preview
+	hack/build-client.sh "${AUTOREST_IMAGE}" 2020-04-30 2021-09-01-preview
 
 # TODO: hard coding dev-config.yaml is clunky; it is also probably convenient to
 # override COMMIT.
@@ -53,6 +58,10 @@ image-aro: aro e2e.test
 image-aro-multistage:
 	docker build --no-cache -f Dockerfile.aro-multistage -t $(ARO_IMAGE) .
 
+image-autorest:
+	docker build --no-cache --build-arg AUTOREST_VERSION="${AUTOREST_VERSION}" \
+	  -f Dockerfile.autorest -t ${AUTOREST_IMAGE} .
+
 image-fluentbit:
 	docker build --no-cache --build-arg VERSION=$(FLUENTBIT_VERSION) \
 	  -f Dockerfile.fluentbit -t ${RP_IMAGE_ACR}.azurecr.io/fluentbit:$(FLUENTBIT_VERSION) .
@@ -75,6 +84,9 @@ ifeq ("${RP_IMAGE_ACR}-$(BRANCH)","arointsvc-master")
 		docker push arointsvc.azurecr.io/aro:latest
 endif
 
+publish-image-autorest: image-autorest
+	docker push ${AUTOREST_IMAGE}
+
 publish-image-fluentbit: image-fluentbit
 	docker push ${RP_IMAGE_ACR}.azurecr.io/fluentbit:$(FLUENTBIT_VERSION)
 
@@ -94,7 +106,7 @@ pyenv:
 	python3 -m venv pyenv
 	. pyenv/bin/activate && \
 		pip install -U pip && \
-		pip install autopep8 azdev azure-mgmt-loganalytics==0.2.0 ruamel.yaml wheel && \
+		pip install autopep8 azdev azure-mgmt-loganalytics==0.2.0 colorama ruamel.yaml wheel && \
 		azdev setup -r . && \
 		sed -i -e "s|^dev_sources = $(PWD)$$|dev_sources = $(PWD)/python|" ~/.azure/config
 
@@ -134,12 +146,12 @@ validate-go:
 	go test -tags e2e -run ^$$ ./test/e2e/...
 
 unit-test-go:
-	go run ./vendor/gotest.tools/gotestsum/main.go --format pkgname --junitfile report.xml -- -coverprofile=cover.out ./...
+	go run ./vendor/gotest.tools/gotestsum/main.go --format pkgname --junitfile report.xml -- -tags=aro -coverprofile=cover.out ./...
 
 lint-go:
 	go run ./vendor/github.com/golangci/golangci-lint/cmd/golangci-lint run
 
-test-python: generate pyenv az
+test-python: pyenv az
 	. pyenv/bin/activate && \
 		azdev linter && \
 		azdev style && \
@@ -152,4 +164,4 @@ vendor:
 	# See comments in the script for background on why we need it
 	hack/update-go-module-dependencies.sh
 
-.PHONY: admin.kubeconfig aro az clean client deploy discoverycache generate image-aro image-aro-multistage image-fluentbit image-proxy lint-go proxy publish-image-aro publish-image-aro-multistage publish-image-fluentbit publish-image-proxy secrets secrets-update e2e.test tunnel test-e2e test-go test-python vendor build-all validate-go  unit-test-go coverage-go
+.PHONY: admin.kubeconfig aro az clean client deploy dev-config.yaml discoverycache generate image-aro image-aro-multistage image-fluentbit image-proxy lint-go runlocal-rp proxy publish-image-aro publish-image-aro-multistage publish-image-fluentbit publish-image-proxy secrets secrets-update e2e.test tunnel test-e2e test-go test-python vendor build-all validate-go  unit-test-go coverage-go

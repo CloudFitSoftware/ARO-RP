@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	consoleclient "github.com/openshift/client-go/console/clientset/versioned"
 	securityclient "github.com/openshift/client-go/security/clientset/versioned"
 	maoclient "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"
 	mcoclient "github.com/openshift/machine-config-operator/pkg/generated/clientset/versioned"
@@ -23,17 +24,19 @@ import (
 	aroclient "github.com/Azure/ARO-RP/pkg/operator/clientset/versioned"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/alertwebhook"
-	"github.com/Azure/ARO-RP/pkg/operator/controllers/azurensg"
+	"github.com/Azure/ARO-RP/pkg/operator/controllers/banner"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/checker"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/clusteroperatoraro"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/dnsmasq"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/genevalogging"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/machine"
+	"github.com/Azure/ARO-RP/pkg/operator/controllers/machineset"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/monitoring"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/node"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/pullsecret"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/rbac"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/routefix"
+	"github.com/Azure/ARO-RP/pkg/operator/controllers/subnets"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers/workaround"
 	"github.com/Azure/ARO-RP/pkg/util/dynamichelper"
 	utillog "github.com/Azure/ARO-RP/pkg/util/log"
@@ -72,6 +75,10 @@ func operator(ctx context.Context, log *logrus.Entry) error {
 		return err
 	}
 	configcli, err := configclient.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+	consolecli, err := consoleclient.NewForConfig(restConfig)
 	if err != nil {
 		return err
 	}
@@ -159,15 +166,25 @@ func operator(ctx context.Context, log *logrus.Entry) error {
 			arocli, kubernetescli)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller Node: %v", err)
 		}
-		if err = (azurensg.NewReconciler(
-			log.WithField("controller", controllers.AzureNSGControllerName),
+		if err = (subnets.NewReconciler(
+			log.WithField("controller", controllers.AzureSubnetsControllerName),
 			arocli, kubernetescli, maocli)).SetupWithManager(mgr); err != nil {
-			return fmt.Errorf("unable to create controller AzureNSG: %v", err)
+			return fmt.Errorf("unable to create controller Subnets: %v", err)
 		}
 		if err = (machine.NewReconciler(
 			log.WithField("controller", controllers.MachineControllerName),
 			arocli, maocli, isLocalDevelopmentMode, role)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller Machine: %v", err)
+		}
+		if err = (banner.NewReconciler(
+			log.WithField("controller", controllers.BannerControllerName),
+			arocli, consolecli)).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to create controller Banner: %v", err)
+		}
+		if err = (machineset.NewReconciler(
+			log.WithField("controller", controllers.MachineSetControllerName),
+			arocli, maocli)).SetupWithManager(mgr); err != nil {
+			return fmt.Errorf("unable to create controller MachineSet: %v", err)
 		}
 	}
 

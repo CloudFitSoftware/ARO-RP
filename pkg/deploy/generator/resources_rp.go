@@ -10,13 +10,13 @@ import (
 
 	mgmtcompute "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-01/compute"
 	mgmtdocumentdb "github.com/Azure/azure-sdk-for-go/services/cosmos-db/mgmt/2021-01-15/documentdb"
-	mgmtkeyvault "github.com/Azure/azure-sdk-for-go/services/keyvault/mgmt/2016-10-01/keyvault"
+	mgmtkeyvault "github.com/Azure/azure-sdk-for-go/services/keyvault/mgmt/2019-09-01/keyvault"
 	mgmtmsi "github.com/Azure/azure-sdk-for-go/services/msi/mgmt/2018-11-30/msi"
-	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-07-01/network"
+	mgmtnetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2020-08-01/network"
 	mgmtauthorization "github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-09-01-preview/authorization"
 	mgmtcontainerregistry "github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2020-11-01-preview/containerregistry"
 	mgmtinsights "github.com/Azure/azure-sdk-for-go/services/preview/monitor/mgmt/2018-03-01/insights"
-	mgmtstorage "github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2019-04-01/storage"
+	mgmtstorage "github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2019-06-01/storage"
 	"github.com/Azure/go-autorest/autorest/to"
 
 	"github.com/Azure/ARO-RP/pkg/env"
@@ -72,19 +72,60 @@ func (g *generator) rpSecurityGroup() *arm.Resource {
 			Name: to.StringPtr("ssh_in"),
 		})
 	} else {
-		rules = append(rules, mgmtnetwork.SecurityRule{
-			SecurityRulePropertiesFormat: &mgmtnetwork.SecurityRulePropertiesFormat{
-				Protocol:                 mgmtnetwork.SecurityRuleProtocolTCP,
-				SourcePortRange:          to.StringPtr("*"),
-				DestinationPortRange:     to.StringPtr("443"),
-				SourceAddressPrefixes:    to.StringSlicePtr([]string{}),
-				Access:                   mgmtnetwork.SecurityRuleAccessAllow,
-				DestinationAddressPrefix: to.StringPtr("*"),
-				Priority:                 to.Int32Ptr(130),
-				Direction:                mgmtnetwork.SecurityRuleDirectionInbound,
+		rules = append(rules,
+			mgmtnetwork.SecurityRule{
+				SecurityRulePropertiesFormat: &mgmtnetwork.SecurityRulePropertiesFormat{
+					Protocol:                 mgmtnetwork.SecurityRuleProtocolTCP,
+					SourcePortRange:          to.StringPtr("*"),
+					DestinationPortRange:     to.StringPtr("445"),
+					SourceAddressPrefix:      to.StringPtr("10.0.8.0/24"),
+					DestinationAddressPrefix: to.StringPtr("*"),
+					Access:                   mgmtnetwork.SecurityRuleAccessAllow,
+					Priority:                 to.Int32Ptr(140),
+					Direction:                mgmtnetwork.SecurityRuleDirectionInbound,
+				},
+				Name: to.StringPtr("dbtoken_in_gateway_445"),
 			},
-			Name: to.StringPtr("rp_in_geneva"),
-		})
+			mgmtnetwork.SecurityRule{
+				SecurityRulePropertiesFormat: &mgmtnetwork.SecurityRulePropertiesFormat{
+					Protocol:                 mgmtnetwork.SecurityRuleProtocolTCP,
+					SourcePortRange:          to.StringPtr("*"),
+					DestinationPortRange:     to.StringPtr("8445"),
+					SourceAddressPrefix:      to.StringPtr("10.0.8.0/24"),
+					DestinationAddressPrefix: to.StringPtr("*"),
+					Access:                   mgmtnetwork.SecurityRuleAccessAllow,
+					Priority:                 to.Int32Ptr(141),
+					Direction:                mgmtnetwork.SecurityRuleDirectionInbound,
+				},
+				Name: to.StringPtr("dbtoken_in_gateway_8445"),
+			},
+			mgmtnetwork.SecurityRule{
+				SecurityRulePropertiesFormat: &mgmtnetwork.SecurityRulePropertiesFormat{
+					Protocol:                 mgmtnetwork.SecurityRuleProtocolTCP,
+					SourcePortRange:          to.StringPtr("*"),
+					DestinationPortRange:     to.StringPtr("*"),
+					SourceAddressPrefix:      to.StringPtr("10.0.8.0/24"),
+					DestinationAddressPrefix: to.StringPtr("*"),
+					Access:                   mgmtnetwork.SecurityRuleAccessDeny,
+					Priority:                 to.Int32Ptr(145),
+					Direction:                mgmtnetwork.SecurityRuleDirectionInbound,
+				},
+				Name: to.StringPtr("deny_in_gateway"),
+			},
+			mgmtnetwork.SecurityRule{
+				SecurityRulePropertiesFormat: &mgmtnetwork.SecurityRulePropertiesFormat{
+					Protocol:                 mgmtnetwork.SecurityRuleProtocolTCP,
+					SourcePortRange:          to.StringPtr("*"),
+					DestinationPortRange:     to.StringPtr("443"),
+					SourceAddressPrefixes:    to.StringSlicePtr([]string{}),
+					Access:                   mgmtnetwork.SecurityRuleAccessAllow,
+					DestinationAddressPrefix: to.StringPtr("*"),
+					Priority:                 to.Int32Ptr(130),
+					Direction:                mgmtnetwork.SecurityRuleDirectionInbound,
+				},
+				Name: to.StringPtr("rp_in_geneva"),
+			},
+		)
 	}
 
 	return g.securityGroup("rp-nsg", &rules, g.conditionStanza("deployNSGs"))
@@ -118,7 +159,7 @@ func (g *generator) rpVnet() *arm.Resource {
 		}
 	}
 
-	return g.virtualNetwork("rp-vnet", "10.0.0.0/24", &[]mgmtnetwork.Subnet{subnet}, nil)
+	return g.virtualNetwork("rp-vnet", "10.0.0.0/24", &[]mgmtnetwork.Subnet{subnet}, nil, []string{"[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-nsg')]"})
 }
 
 func (g *generator) rpPEVnet() *arm.Resource {
@@ -133,7 +174,7 @@ func (g *generator) rpPEVnet() *arm.Resource {
 			},
 			Name: to.StringPtr("rp-pe-subnet"),
 		},
-	}, nil)
+	}, nil, []string{"[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-pe-nsg')]"})
 }
 
 func (g *generator) rpLB() *arm.Resource {
@@ -277,7 +318,8 @@ func (g *generator) rpLBInternal() *arm.Resource {
 								ID: to.StringPtr("[resourceId('Microsoft.Network/virtualNetworks/subnets', 'rp-vnet', 'rp-subnet')]"),
 							},
 						},
-						Name: to.StringPtr("dbtoken-frontend"),
+						Name:  to.StringPtr("dbtoken-frontend"),
+						Zones: &[]string{},
 					},
 				},
 				BackendAddressPools: &[]mgmtnetwork.BackendAddressPool{
@@ -299,7 +341,7 @@ func (g *generator) rpLBInternal() *arm.Resource {
 							},
 							Protocol:         mgmtnetwork.TransportProtocolTCP,
 							LoadDistribution: mgmtnetwork.LoadDistributionDefault,
-							FrontendPort:     to.Int32Ptr(443),
+							FrontendPort:     to.Int32Ptr(8445),
 							BackendPort:      to.Int32Ptr(445),
 						},
 						Name: to.StringPtr("dbtoken-lbrule"),
@@ -371,6 +413,8 @@ func (g *generator) rpLBAlert(threshold float64, severity int32, name string, ev
 }
 
 func (g *generator) rpVMSS() *arm.Resource {
+	// TODO: there is a lot of duplication with gatewayVMSS() (and other places)
+
 	parts := []string{
 		fmt.Sprintf("base64ToString('%s')", base64.StdEncoding.EncodeToString([]byte("set -ex\n\n"))),
 	}
@@ -390,8 +434,12 @@ func (g *generator) rpVMSS() *arm.Resource {
 		"clusterParentDomainName",
 		"databaseAccountName",
 		"dbtokenClientId",
+		"fluentbitImage",
 		"fpClientId",
 		"fpServicePrincipalId",
+		"gatewayDomains",
+		"gatewayResourceGroupName",
+		"gatewayServicePrincipalId",
 		"keyvaultDNSSuffix",
 		"keyvaultPrefix",
 		"mdmFrontendUrl",
@@ -461,7 +509,6 @@ rm -f /var/lib/rpm/__db*
 
 rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
-rpm --import https://packages.fluentbit.io/fluentbit.key
 
 for attempt in {1..5}; do
   yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && break
@@ -482,16 +529,11 @@ enabled=yes
 gpgcheck=no
 EOF
 
-cat >/etc/yum.repos.d/td-agent-bit.repo <<'EOF'
-[td-agent-bit]
-name=td-agent-bit
-baseurl=https://packages.fluentbit.io/centos/7/$basearch
-enabled=yes
-gpgcheck=yes
-EOF
+semanage fcontext -a -t var_log_t "/var/log/journal(/.*)?"
+mkdir -p /var/log/journal
 
 for attempt in {1..5}; do
-yum --enablerepo=rhui-rhel-7-server-rhui-optional-rpms -y install azsec-clamav azsec-monitor azure-cli azure-mdsd azure-security docker openssl-perl td-agent-bit && break
+yum --enablerepo=rhui-rhel-7-server-rhui-optional-rpms -y install clamav azsec-clamav azsec-monitor azure-cli azure-mdsd azure-security docker openssl-perl && break
   if [[ ${attempt} -lt 5 ]]; then sleep 10; else exit 1; fi
 done
 
@@ -506,7 +548,24 @@ firewall-cmd --add-port=444/tcp --permanent
 firewall-cmd --add-port=445/tcp --permanent
 firewall-cmd --add-port=2222/tcp --permanent
 
-cat >/etc/td-agent-bit/td-agent-bit.conf <<'EOF'
+export AZURE_CLOUD_NAME=$AZURECLOUDNAME
+
+az login -i --allow-no-subscriptions
+
+systemctl start docker.service
+az acr login --name "$(sed -e 's|.*/||' <<<"$ACRRESOURCEID")"
+
+MDMIMAGE="${RPIMAGE%%/*}/${MDMIMAGE##*/}"
+docker pull "$MDMIMAGE"
+docker pull "$RPIMAGE"
+docker pull "$FLUENTBITIMAGE"
+
+az logout
+
+mkdir -p /etc/fluentbit/
+mkdir -p /var/lib/fluent
+
+cat >/etc/fluentbit/fluentbit.conf <<'EOF'
 [INPUT]
 	Name systemd
 	Tag journald
@@ -529,19 +588,41 @@ cat >/etc/td-agent-bit/td-agent-bit.conf <<'EOF'
 	Port 29230
 EOF
 
-export AZURE_CLOUD_NAME=$AZURECLOUDNAME
+echo "FLUENTBITIMAGE=$FLUENTBITIMAGE" >/etc/sysconfig/fluentbit
 
-az login -i
-az account set -s "$SUBSCRIPTIONID"
+cat >/etc/systemd/system/fluentbit.service <<'EOF'
+[Unit]
+After=docker.service
+Requires=docker.service
+StartLimitIntervalSec=0
 
-systemctl start docker.service
-az acr login --name "$(sed -e 's|.*/||' <<<"$ACRRESOURCEID")"
+[Service]
+RestartSec=1s
+EnvironmentFile=/etc/sysconfig/fluentbit
+ExecStartPre=-/usr/bin/docker rm -f %N
+ExecStart=/usr/bin/docker run \
+  --security-opt label=disable \
+  --entrypoint /opt/td-agent-bit/bin/td-agent-bit \
+  --net=host \
+  --hostname %H \
+  --name %N \
+  --rm \
+  -v /etc/fluentbit/fluentbit.conf:/etc/fluentbit/fluentbit.conf \
+  -v /var/lib/fluent:/var/lib/fluent:z \
+  -v /var/log/journal:/var/log/journal:ro \
+  -v /run/log/journal:/run/log/journal:ro \
+  -v /etc/machine-id:/etc/machine-id:ro \
+  $FLUENTBITIMAGE \
+  -c /etc/fluentbit/fluentbit.conf
 
-MDMIMAGE="${RPIMAGE%%/*}/${MDMIMAGE##*/}"
-docker pull "$MDMIMAGE"
-docker pull "$RPIMAGE"
+ExecStop=/usr/bin/docker stop %N
+Restart=always
+RestartSec=5
+StartLimitInterval=0
 
-az logout
+[Install]
+WantedBy=multi-user.target
+EOF
 
 mkdir /etc/aro-rp
 base64 -d <<<"$ADMINAPICABUNDLE" >/etc/aro-rp/admin-ca-bundle.pem
@@ -606,6 +687,8 @@ CLUSTER_MDSD_CONFIG_VERSION='$CLUSTERMDSDCONFIGVERSION'
 CLUSTER_MDSD_NAMESPACE='$CLUSTERMDSDNAMESPACE'
 DATABASE_ACCOUNT_NAME='$DATABASEACCOUNTNAME'
 DOMAIN_NAME='$LOCATION.$CLUSTERPARENTDOMAINNAME'
+GATEWAY_DOMAINS='$GATEWAYDOMAINS'
+GATEWAY_RESOURCEGROUP='$GATEWAYRESOURCEGROUPNAME'
 KEYVAULT_PREFIX='$KEYVAULTPREFIX'
 MDM_ACCOUNT='$RPMDMACCOUNT'
 MDM_NAMESPACE=RP
@@ -637,6 +720,8 @@ ExecStart=/usr/bin/docker run \
   -e CLUSTER_MDSD_NAMESPACE \
   -e DATABASE_ACCOUNT_NAME \
   -e DOMAIN_NAME \
+  -e GATEWAY_DOMAINS \
+  -e GATEWAY_RESOURCEGROUP \
   -e KEYVAULT_PREFIX \
   -e MDM_ACCOUNT \
   -e MDM_NAMESPACE \
@@ -662,6 +747,7 @@ EOF
 cat >/etc/sysconfig/aro-dbtoken <<EOF
 DATABASE_ACCOUNT_NAME='$DATABASEACCOUNTNAME'
 AZURE_DBTOKEN_CLIENT_ID='$DBTOKENCLIENTID'
+AZURE_GATEWAY_SERVICE_PRINCIPAL_ID='$GATEWAYSERVICEPRINCIPALID'
 KEYVAULT_PREFIX='$KEYVAULTPREFIX'
 MDM_ACCOUNT='$RPMDMACCOUNT'
 MDM_NAMESPACE=DBToken
@@ -680,6 +766,7 @@ ExecStart=/usr/bin/docker run \
   --hostname %H \
   --name %N \
   --rm \
+  -e AZURE_GATEWAY_SERVICE_PRINCIPAL_ID \
   -e DATABASE_ACCOUNT_NAME \
   -e AZURE_DBTOKEN_CLIENT_ID \
   -e KEYVAULT_PREFIX \
@@ -826,8 +913,7 @@ echo "Download \$COMPONENT credentials"
 
 TEMP_DIR=\$(mktemp -d)
 export AZURE_CONFIG_DIR=\$(mktemp -d)
-az login -i
-az account set -s "$SUBSCRIPTIONID"
+az login -i --allow-no-subscriptions
 
 trap "cleanup" EXIT
 
@@ -917,7 +1003,7 @@ cat >/etc/default/vsa-nodescan-agent.config <<EOF
   }
 EOF
 
-for service in aro-dbtoken aro-monitor aro-portal aro-rp auoms azsecd azsecmond mdsd mdm chronyd td-agent-bit; do
+for service in aro-dbtoken aro-monitor aro-portal aro-rp auoms azsecd azsecmond mdsd mdm chronyd fluentbit; do
   systemctl enable $service.service
 done
 
@@ -925,6 +1011,7 @@ for scan in baseline clamav software; do
   /usr/local/bin/azsecd config -s $scan -d P1D
 done
 
+restorecon -RF /var/log/*
 (sleep 30; reboot) &
 `))
 
@@ -1047,7 +1134,6 @@ done
 		APIVersion: azureclient.APIVersion("Microsoft.Compute"),
 		DependsOn: []string{
 			"[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, parameters('rpServicePrincipalId'), 'RP / Reader'))]",
-			"[resourceId('Microsoft.Network/virtualNetworks', 'rp-vnet')]",
 			"[resourceId('Microsoft.Network/loadBalancers', 'rp-lb')]",
 			"[resourceId('Microsoft.Network/loadBalancers', 'rp-lb-internal')]",
 			"[resourceId('Microsoft.Storage/storageAccounts', substring(parameters('storageAccountDomain'), 0, indexOf(parameters('storageAccountDomain'), '.')))]",
@@ -1123,6 +1209,7 @@ func (g *generator) rpServiceKeyvaultAccessPolicies() []mgmtkeyvault.AccessPolic
 			Permissions: &mgmtkeyvault.Permissions{
 				Secrets: &[]mgmtkeyvault.SecretPermissions{
 					mgmtkeyvault.SecretPermissionsGet,
+					mgmtkeyvault.SecretPermissionsList,
 				},
 			},
 		},
@@ -1350,8 +1437,6 @@ func (g *generator) rpCosmosDB() []*arm.Resource {
 		cosmosdb.IsVirtualNetworkFilterEnabled = to.BoolPtr(true)
 		cosmosdb.VirtualNetworkRules = &[]mgmtdocumentdb.VirtualNetworkRule{}
 		cosmosdb.DisableKeyBasedMetadataWriteAccess = to.BoolPtr(true)
-
-		r.DependsOn = append(r.DependsOn, "[resourceId('Microsoft.Network/virtualNetworks', 'rp-vnet')]")
 	}
 
 	rs := []*arm.Resource{
@@ -1391,8 +1476,34 @@ func (g *generator) database(databaseName string, addDependsOn bool) []*arm.Reso
 		},
 	}
 
+	gateway := &arm.Resource{
+		Resource: &mgmtdocumentdb.SQLContainerCreateUpdateParameters{
+			SQLContainerCreateUpdateProperties: &mgmtdocumentdb.SQLContainerCreateUpdateProperties{
+				Resource: &mgmtdocumentdb.SQLContainerResource{
+					ID: to.StringPtr("Gateway"),
+					PartitionKey: &mgmtdocumentdb.ContainerPartitionKey{
+						Paths: &[]string{
+							"/id",
+						},
+						Kind: mgmtdocumentdb.PartitionKindHash,
+					},
+					DefaultTTL: to.Int32Ptr(-1),
+				},
+				Options: &mgmtdocumentdb.CreateUpdateOptions{},
+			},
+			Name:     to.StringPtr("[concat(parameters('databaseAccountName'), '/', " + databaseName + ", '/Gateway')]"),
+			Type:     to.StringPtr("Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers"),
+			Location: to.StringPtr("[resourceGroup().location]"),
+		},
+		APIVersion: azureclient.APIVersion("Microsoft.DocumentDB"),
+		DependsOn: []string{
+			"[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), " + databaseName + ")]",
+		},
+	}
+
 	if g.production {
 		portal.Resource.(*mgmtdocumentdb.SQLContainerCreateUpdateParameters).SQLContainerCreateUpdateProperties.Options.Throughput = to.Int32Ptr(400)
+		gateway.Resource.(*mgmtdocumentdb.SQLContainerCreateUpdateParameters).SQLContainerCreateUpdateProperties.Options.Throughput = to.Int32Ptr(400)
 	}
 
 	rs := []*arm.Resource{
@@ -1459,6 +1570,7 @@ func (g *generator) database(databaseName string, addDependsOn bool) []*arm.Reso
 				"[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountName'), " + databaseName + ")]",
 			},
 		},
+		gateway,
 		{
 			Resource: &mgmtdocumentdb.SQLContainerCreateUpdateParameters{
 				SQLContainerCreateUpdateProperties: &mgmtdocumentdb.SQLContainerCreateUpdateProperties{
@@ -1636,6 +1748,10 @@ func (g *generator) rpACR() *arm.Resource {
 			Sku: &mgmtcontainerregistry.Sku{
 				Name: mgmtcontainerregistry.Premium,
 			},
+			RegistryProperties: &mgmtcontainerregistry.RegistryProperties{
+				// enable data hostname stability: https://azure.microsoft.com/en-gb/blog/azure-container-registry-mitigating-data-exfiltration-with-dedicated-data-endpoints/
+				DataEndpointEnabled: to.BoolPtr(true),
+			},
 			Name: to.StringPtr("[substring(parameters('acrResourceId'), add(lastIndexOf(parameters('acrResourceId'), '/'), 1))]"),
 			Type: to.StringPtr("Microsoft.ContainerRegistry/registries"),
 			// TODO: INT ACR has wrong location - should be redeployed at globalResourceGroupLocation then remove acrLocationOverride configurable.
@@ -1664,6 +1780,13 @@ func (g *generator) rpACRRBAC() []*arm.Resource {
 			"Microsoft.ContainerRegistry/registries",
 			"substring(parameters('acrResourceId'), add(lastIndexOf(parameters('acrResourceId'), '/'), 1))",
 			"concat(substring(parameters('acrResourceId'), add(lastIndexOf(parameters('acrResourceId'), '/'), 1)), '/', '/Microsoft.Authorization/', guid(concat(parameters('acrResourceId'), parameters('rpServicePrincipalId'), 'RP / AcrPull')))",
+		),
+		rbac.ResourceRoleAssignmentWithName(
+			rbac.RoleACRPull,
+			"parameters('gatewayServicePrincipalId')",
+			"Microsoft.ContainerRegistry/registries",
+			"substring(parameters('acrResourceId'), add(lastIndexOf(parameters('acrResourceId'), '/'), 1))",
+			"concat(substring(parameters('acrResourceId'), add(lastIndexOf(parameters('acrResourceId'), '/'), 1)), '/', '/Microsoft.Authorization/', guid(concat(parameters('acrResourceId'), parameters('gatewayServicePrincipalId'), 'RP / AcrPull')))",
 		),
 		rbac.ResourceRoleAssignmentWithName(
 			"48983534-3d06-4dcb-a566-08a694eb1279", // ARO v4 ContainerRegistry Token Contributor

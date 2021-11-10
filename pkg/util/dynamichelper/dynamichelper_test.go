@@ -10,7 +10,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	kruntime "k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/Azure/ARO-RP/pkg/util/cmp"
 )
@@ -18,9 +18,9 @@ import (
 func TestMerge(t *testing.T) {
 	for _, tt := range []struct {
 		name          string
-		old           runtime.Object
-		new           runtime.Object
-		want          runtime.Object
+		old           kruntime.Object
+		new           kruntime.Object
+		want          kruntime.Object
 		wantChanged   bool
 		wantEmptyDiff bool
 	}{
@@ -81,6 +81,7 @@ func TestMerge(t *testing.T) {
 						"openshift.io/sa.scc.supplemental-groups": "groups",
 						"openshift.io/sa.scc.uid-range":           "uids",
 					},
+					Labels: map[string]string{"kubernetes.io/metadata.name": "test"},
 				},
 				Spec: corev1.NamespaceSpec{
 					Finalizers: []corev1.FinalizerName{

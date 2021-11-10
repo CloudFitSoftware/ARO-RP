@@ -52,7 +52,7 @@ func validOpenShiftCluster() *OpenShiftCluster {
 		Tags: Tags{
 			"key": "value",
 		},
-		SystemData: SystemData{
+		SystemData: &SystemData{
 			CreatedBy:          "00000000-0000-0000-0000-000000000000",
 			CreatedByType:      CreatedByTypeApplication,
 			CreatedAt:          &timestamp,
@@ -76,9 +76,9 @@ func validOpenShiftCluster() *OpenShiftCluster {
 				ClientID:     "11111111-1111-1111-1111-111111111111",
 			},
 			NetworkProfile: NetworkProfile{
-				PodCIDR:     "10.128.0.0/14",
-				ServiceCIDR: "172.30.0.0/16",
-				SDNProvider: SDNProviderOVNKubernetes,
+				PodCIDR:                "10.128.0.0/14",
+				ServiceCIDR:            "172.30.0.0/16",
+				SoftwareDefinedNetwork: SoftwareDefinedNetworkOVNKubernetes,
 			},
 			MasterProfile: MasterProfile{
 				VMSize:           VMSizeStandardD8sV3,
@@ -319,6 +319,13 @@ func TestOpenShiftClusterStaticValidateClusterProfile(t *testing.T) {
 			},
 			wantErr: "400: InvalidParameter: properties.clusterProfile.resourceGroupId: The provided resource group '/subscriptions/7a3036d1-60a1-4605-8a41-44955e050804/resourcegroups/test-cluster' is invalid: must be in same subscription as cluster.",
 		},
+		{
+			name: "cluster resourceGroup and external resourceGroup equal",
+			modify: func(oc *OpenShiftCluster) {
+				oc.Properties.ClusterProfile.ResourceGroupID = "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/resourceGroup"
+			},
+			wantErr: "400: InvalidParameter: properties.clusterProfile.resourceGroupId: The provided resource group '/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/resourceGroup' is invalid: must be different from resourceGroup of the OpenShift cluster object.",
+		},
 	}
 
 	createTests := []*validateTest{
@@ -415,9 +422,9 @@ func TestOpenShiftClusterStaticValidateServicePrincipalProfile(t *testing.T) {
 func TestOpenShiftClusterStaticValidateNetworkProfile(t *testing.T) {
 	createtests := []*validateTest{
 		{
-			name: "sdnProvider create as OpenShiftSDN",
+			name: "SoftwareDefinedNetwork create as OpenShiftSDN",
 			modify: func(oc *OpenShiftCluster) {
-				oc.Properties.NetworkProfile.SDNProvider = SDNProviderOpenShiftSDN
+				oc.Properties.NetworkProfile.SoftwareDefinedNetwork = SoftwareDefinedNetworkOpenShiftSDN
 			},
 		},
 	}
@@ -469,18 +476,18 @@ func TestOpenShiftClusterStaticValidateNetworkProfile(t *testing.T) {
 			wantErr: "400: InvalidParameter: properties.networkProfile.serviceCidr: The provided vnet CIDR '10.0.0.0/23' is invalid: must be /22 or larger.",
 		},
 		{
-			name: "sdnProvider given as empty",
+			name: "SoftwareDefinedNetwork given as empty",
 			modify: func(oc *OpenShiftCluster) {
-				oc.Properties.NetworkProfile.SDNProvider = ""
+				oc.Properties.NetworkProfile.SoftwareDefinedNetwork = ""
 			},
-			wantErr: "400: InvalidParameter: properties.networkProfile.sdnProvider: The provided SDNProvider '' is invalid.",
+			wantErr: "400: InvalidParameter: properties.networkProfile.SoftwareDefinedNetwork: The provided SoftwareDefinedNetwork '' is invalid.",
 		},
 		{
-			name: "sdnProvider given InvalidOption",
+			name: "SoftwareDefinedNetwork given InvalidOption",
 			modify: func(oc *OpenShiftCluster) {
-				oc.Properties.NetworkProfile.SDNProvider = "InvalidOption"
+				oc.Properties.NetworkProfile.SoftwareDefinedNetwork = "InvalidOption"
 			},
-			wantErr: "400: InvalidParameter: properties.networkProfile.sdnProvider: The provided SDNProvider 'InvalidOption' is invalid.",
+			wantErr: "400: InvalidParameter: properties.networkProfile.SoftwareDefinedNetwork: The provided SoftwareDefinedNetwork 'InvalidOption' is invalid.",
 		},
 	}
 
@@ -645,6 +652,20 @@ func TestOpenShiftClusterStaticValidateWorkerProfile(t *testing.T) {
 				oc.Properties.WorkerProfiles[0].DiskEncryptionSetID = "/subscriptions/7a3036d1-60a1-4605-8a41-44955e050804/resourceGroups/fakeRG/providers/Microsoft.Compute/diskEncryptionSets/fakeDES1"
 			},
 			wantErr: "400: InvalidParameter: properties.workerProfiles['worker'].subnetId: The provided worker disk encryption set '/subscriptions/7a3036d1-60a1-4605-8a41-44955e050804/resourceGroups/fakeRG/providers/Microsoft.Compute/diskEncryptionSets/fakeDES1' is invalid: must be the same as master disk encryption set '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-cluster/providers/Microsoft.Compute/diskEncryptionSets/test-disk-encryption-set'.",
+		},
+		{
+			name: "encryption at host invalid",
+			modify: func(oc *OpenShiftCluster) {
+				oc.Properties.WorkerProfiles[0].EncryptionAtHost = "Banana"
+			},
+			wantErr: "400: InvalidParameter: properties.workerProfiles['worker'].encryptionAtHost: The provided value 'Banana' is invalid.",
+		},
+		{
+			name: "encryption at host empty",
+			modify: func(oc *OpenShiftCluster) {
+				oc.Properties.WorkerProfiles[0].EncryptionAtHost = ""
+			},
+			wantErr: "400: InvalidParameter: properties.workerProfiles['worker'].encryptionAtHost: The provided value '' is invalid.",
 		},
 	}
 
@@ -851,9 +872,11 @@ func TestOpenShiftClusterStaticValidateDelta(t *testing.T) {
 			modify: func(oc *OpenShiftCluster) { oc.Properties.ServicePrincipalProfile.ClientSecret = "invalid" },
 		},
 		{
-			name:    "sdnProvider should fail to change from OVNKubernetes to OpenShiftSDN",
-			modify:  func(oc *OpenShiftCluster) { oc.Properties.NetworkProfile.SDNProvider = SDNProviderOpenShiftSDN },
-			wantErr: "400: PropertyChangeNotAllowed: properties.networkProfile.sdnProvider: Changing property 'properties.networkProfile.sdnProvider' is not allowed.",
+			name: "SoftwareDefinedNetwork should fail to change from OVNKubernetes to OpenShiftSDN",
+			modify: func(oc *OpenShiftCluster) {
+				oc.Properties.NetworkProfile.SoftwareDefinedNetwork = SoftwareDefinedNetworkOpenShiftSDN
+			},
+			wantErr: "400: PropertyChangeNotAllowed: properties.networkProfile.softwareDefinedNetwork: Changing property 'properties.networkProfile.softwareDefinedNetwork' is not allowed.",
 		},
 		{
 			name:    "podCidr change",
@@ -916,7 +939,7 @@ func TestOpenShiftClusterStaticValidateDelta(t *testing.T) {
 		{
 			name: "systemData set to empty",
 			modify: func(oc *OpenShiftCluster) {
-				oc.SystemData = SystemData{}
+				oc.SystemData = &SystemData{}
 			},
 			wantErr: "400: PropertyChangeNotAllowed: systemData.createdBy: Changing property 'systemData.createdBy' is not allowed.",
 		},

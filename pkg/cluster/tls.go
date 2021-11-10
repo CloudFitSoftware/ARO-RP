@@ -134,9 +134,11 @@ func (m *manager) configureAPIServerCertificate(ctx context.Context) error {
 		return nil
 	}
 
-	err = m.ensureSecret(ctx, m.kubernetescli.CoreV1().Secrets("openshift-config"), m.doc.ID+"-apiserver")
-	if err != nil {
-		return err
+	for _, namespace := range []string{"openshift-config", "openshift-azure-operator"} {
+		err = m.ensureSecret(ctx, m.kubernetescli.CoreV1().Secrets(namespace), m.doc.ID+"-apiserver")
+		if err != nil {
+			return err
+		}
 	}
 
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
@@ -175,9 +177,11 @@ func (m *manager) configureIngressCertificate(ctx context.Context) error {
 		return nil
 	}
 
-	err = m.ensureSecret(ctx, m.kubernetescli.CoreV1().Secrets("openshift-ingress"), m.doc.ID+"-ingress")
-	if err != nil {
-		return err
+	for _, namespace := range []string{"openshift-ingress", "openshift-azure-operator"} {
+		err = m.ensureSecret(ctx, m.kubernetescli.CoreV1().Secrets(namespace), m.doc.ID+"-ingress")
+		if err != nil {
+			return err
+		}
 	}
 
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
