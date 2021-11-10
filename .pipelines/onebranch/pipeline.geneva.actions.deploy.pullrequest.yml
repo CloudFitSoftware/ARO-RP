@@ -25,7 +25,9 @@ resources:
     - repository: rhado
       type: git
       name: ARO.Pipelines
-      ref: refs/heads/master
+    - repository: rpconfig
+      type: git
+      name: RP-Config
 
 extends:
   template: v2/OneBranch.NonOfficial.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
