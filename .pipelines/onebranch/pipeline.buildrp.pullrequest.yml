@@ -51,7 +51,7 @@ extends:
       jobs:
       - job: Clone_ARO
         pool:
-          os: linux
+          type: linux
         variables:
           ob_outputDirectory: $(Build.SourcesDirectory)/out
 
