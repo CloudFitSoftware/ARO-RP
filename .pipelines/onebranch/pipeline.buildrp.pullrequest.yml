@@ -75,6 +75,7 @@ extends:
           ob_git_checkout: true
 
         steps:
+        - checkout: none
         - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
 
 
