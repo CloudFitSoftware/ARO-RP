@@ -49,7 +49,14 @@ extends:
     stages:
     - stage: Build_Docker_Image
       jobs:
+      - job: Clone_ARO
+        pool:
+          os: linux
+        variables:
+          ob_outputDirectory: $(Build.SourcesDirectory)/out
+
       - job: Build_Docker_Image
+        dependsOn: Clone_ARO
         pool:
           type: docker
           os: linux
