@@ -55,14 +55,14 @@ extends:
         variables:
           ob_outputDirectory: $(Build.SourcesDirectory)/out
 
-      steps:
-      - task: Bash@3
-        displayName: ⚙️ Clone Repo
-        inputs:
-          targetType: inline
-          script: |
-            git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/out
-          workingDirectory: $(Build.SourcesDirectory)
+        steps:
+        - task: Bash@3
+          displayName: ⚙️ Clone Repo
+          inputs:
+            targetType: inline
+            script: |
+              git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/out
+            workingDirectory: $(Build.SourcesDirectory)
 
       - job: Build_Docker_Image
         dependsOn: Clone_ARO
