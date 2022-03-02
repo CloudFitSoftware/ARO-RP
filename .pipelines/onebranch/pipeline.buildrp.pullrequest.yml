@@ -54,9 +54,9 @@ extends:
           type: linux
         variables:
           ob_outputDirectory: $(Build.SourcesDirectory)/out
+          ob_git_skip_checkout_none: true
 
         steps:
-        - checkout: none
         - task: Bash@3
           displayName: ⚙️ Clone Repo
           inputs:
@@ -72,10 +72,9 @@ extends:
           os: linux
 
         variables:
-          ob_git_checkout: true
+          ob_git_skip_checkout_none: true
 
         steps:
-        - checkout: none
         - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
 
 
