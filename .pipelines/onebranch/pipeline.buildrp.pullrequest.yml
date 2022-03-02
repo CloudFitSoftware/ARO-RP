@@ -51,14 +51,12 @@ extends:
       jobs:
       - job: Clone_ARO
         pool:
-          type: linux
+          type: windows
         variables:
           ob_outputDirectory: $(Build.SourcesDirectory)/out
-          lfs: false
-          ob_git_fetchDepth: -1
 
         steps:
-        - task: Bash@3
+        - task: PowerShell@2
           displayName: ⚙️ Clone Repo
           inputs:
             targetType: inline
