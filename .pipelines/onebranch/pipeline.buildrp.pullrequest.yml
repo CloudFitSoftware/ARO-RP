@@ -54,7 +54,7 @@ extends:
           type: linux
         variables:
           ob_outputDirectory: $(Build.SourcesDirectory)/out
-          ob_git_skip_checkout_none: true
+          ob_git_fetchDepth: -1
 
         steps:
         - task: Bash@3
@@ -71,9 +71,6 @@ extends:
           type: docker
           os: linux
 
-        variables:
-          ob_git_skip_checkout_none: true
-
         steps:
         - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
 
@@ -86,6 +83,7 @@ extends:
 
         variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
           ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+          ob_git_fetchDepth: -1
 
         steps:
         - template: .pipelines/onebranch/templates/template-buildrp-buildaro.yml@self
