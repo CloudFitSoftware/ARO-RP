@@ -54,6 +54,7 @@ extends:
           type: linux
         variables:
           ob_outputDirectory: $(Build.SourcesDirectory)/out
+          lfs: false
           ob_git_fetchDepth: -1
 
         steps:
@@ -84,6 +85,7 @@ extends:
         variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
           ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
           ob_git_fetchDepth: -1
+          lfs: false
 
         steps:
         - template: .pipelines/onebranch/templates/template-buildrp-buildaro.yml@self
