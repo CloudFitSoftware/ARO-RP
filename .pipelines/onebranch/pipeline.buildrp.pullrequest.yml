@@ -50,11 +50,11 @@ extends:
     stages:
     - stage: Build_Docker_Image
       jobs:
-      - job: Clone_ARO_For_Image
+      - job: Clone_ARO
         pool:
           type: windows
         variables:
-          ob_outputDirectory: $(Build.SourcesDirectory)/dst
+          ob_outputDirectory: $(Build.SourcesDirectory)/out
 
         steps:
         - task: PowerShell@2
@@ -62,11 +62,11 @@ extends:
           inputs:
             targetType: inline
             script: |
-              git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/dst
+              git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/out
             workingDirectory: $(Build.SourcesDirectory)
 
       - job: Build_Docker_Image
-        dependsOn: Clone_ARO_For_Image
+        dependsOn: Clone_ARO
         pool:
           type: docker
           os: linux
@@ -74,7 +74,7 @@ extends:
         steps:
         - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
 
-
+    # ignore below here for the moment
     - stage: Build_ARO
       jobs:
       - job: Clone_ARO_For_Build

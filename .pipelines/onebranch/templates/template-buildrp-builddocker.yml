@@ -3,15 +3,15 @@ steps:
   displayName: Download Build Artifacts
   inputs:
     source: current
-    artifact: drop_Build_Docker_Image_Clone_ARO_For_Image
+    artifact: drop_Build_Docker_Image_Clone_ARO
     path: $(Build.SourcesDirectory)/dst
 
 - task: onebranch.pipeline.imagebuildinfo@1
   displayName: Build Multi Stage Dockerfile
   inputs:
     repositoryName: aro-rp
-    dockerFileRelPath: ./drop_Build_Docker_Image_Clone_ARO_For_Image/Dockerfile.aro-multistage
-    dockerFileContextPath: ./drop_Build_Docker_Image_Clone_ARO_For_Image
+    dockerFileRelPath: ./Dockerfile.aro-multistage
+    dockerFileContextPath: ./
     registry: cdpxlinux.azurecr.io
     saveImageToPath: aro-rp.tar
     buildkit: 1
