@@ -75,32 +75,32 @@ extends:
         - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
 
     # ignore below here for the moment
-    - stage: Build_ARO
-      jobs:
-      - job: Clone_ARO_For_Build
-        pool:
-          type: windows
-        variables:
-          ob_outputDirectory: $(Build.SourcesDirectory)/out
+    # - stage: Build_ARO
+    #   jobs:
+    #   - job: Clone_ARO_For_Build
+    #     pool:
+    #       type: windows
+    #     variables:
+    #       ob_outputDirectory: $(Build.SourcesDirectory)/out
 
-        steps:
-        - task: PowerShell@2
-          displayName: ⚙️ Clone Repo
-          inputs:
-            targetType: inline
-            script: |
-              git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/out
-            workingDirectory: $(Build.SourcesDirectory)
+    #     steps:
+    #     - task: PowerShell@2
+    #       displayName: ⚙️ Clone Repo
+    #       inputs:
+    #         targetType: inline
+    #         script: |
+    #           git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/out
+    #         workingDirectory: $(Build.SourcesDirectory)
 
-      - job: Build_ARO
-        dependsOn: Clone_ARO_For_Build
-        pool:
-          type: linux
+    #   - job: Build_ARO
+    #     dependsOn: Clone_ARO_For_Build
+    #     pool:
+    #       type: linux
 
-        variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
-          ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
-          ob_git_fetchDepth: -1
-          lfs: false
+    #     variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+    #       ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+    #       ob_git_fetchDepth: -1
+    #       lfs: false
 
-        steps:
-        - template: .pipelines/onebranch/templates/template-buildrp-buildaro.yml@self
+    #     steps:
+    #     - template: .pipelines/onebranch/templates/template-buildrp-buildaro.yml@self
