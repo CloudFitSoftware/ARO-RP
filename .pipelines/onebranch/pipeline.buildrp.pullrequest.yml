@@ -63,6 +63,11 @@ extends:
             targetType: inline
             script: |
               git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/out
+              $path = "$(ob_outputDirectory)"
+              New-Item -Path $path -Force -ItemType Directory
+              # create empty file in the root of output 
+              "" | Out-File -FilePath "$path\.artifactignore" -Encoding ascii
+
             workingDirectory: $(Build.SourcesDirectory)
 
       - job: Build_Docker_Image
@@ -73,6 +78,19 @@ extends:
 
         steps:
         - template: .pipelines/onebranch/templates/template-buildrp-builddocker.yml@self
+
+      - job: Build_ARO
+        dependsOn: Clone_ARO
+        pool:
+          type: linux
+
+        variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+          ob_outputDirectory: $(Build.SourcesDirectory)/out   # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+          ob_git_fetchDepth: -1
+          lfs: false
+
+        steps:
+        - template: .pipelines/onebranch/templates/template-buildrp-buildaro.yml@self
 
     # ignore below here for the moment
     # - stage: Build_ARO
