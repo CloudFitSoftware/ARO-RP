@@ -52,7 +52,7 @@ extends:
       jobs:
       - job: Clone_ARO
         pool:
-          type: windows
+          type: linux
         variables:
           ob_outputDirectory: $(Build.SourcesDirectory)/out
 
@@ -64,13 +64,13 @@ extends:
             script: |
               git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/arorp
               Write-Host "SourceBranchName: $(Build.SourceBranchName)"
-              git checkout 448cec875
+              git checkout $(Build.SourceBranchName)
               $path = "$(ob_outputDirectory)"
               New-Item -Path $path -Force -ItemType Directory
               Copy-Item -Path $(Build.SourcesDirectory)/arorp -Destination $path -Recurse -Force
-              Remove-Item -Path $(Build.SourcesDirectory)/arorp -Recurse -Force
+              rm -rf $(Build.SourcesDirectory)/arorp
               # create empty file in the root of output 
-              "" | Out-File -FilePath "$path\.artifactignore" -Encoding ascii
+              "" | Out-File -FilePath "$path/.artifactignore" -Encoding ascii
 
             workingDirectory: $(Build.SourcesDirectory)
 
