@@ -67,7 +67,7 @@ extends:
               $path = "$(ob_outputDirectory)"
               New-Item -Path $path -Force -ItemType Directory
               Copy-Item -Path $(Build.SourcesDirectory)/arorp -Destination $path -Recurse -Force
-              Remove-Item -Path $(Build.SorcesDirectory)/arorp -Recurse -Force
+              Remove-Item -Path $(Build.SourcesDirectory)/arorp -Recurse -Force
               # create empty file in the root of output 
               "" | Out-File -FilePath "$path\.artifactignore" -Encoding ascii
 
