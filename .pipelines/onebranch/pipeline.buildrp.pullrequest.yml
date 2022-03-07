@@ -64,9 +64,10 @@ extends:
             script: |
               git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/arorp
               git checkout 448cec875
-              Copy-Item -Path $(Build.SourcesDirectory) -Destination $(ob_outputDirectory) -Recurse -Force
               $path = "$(ob_outputDirectory)"
               New-Item -Path $path -Force -ItemType Directory
+              Copy-Item -Path $(Build.SourcesDirectory)/arorp -Destination $path -Recurse -Force
+              Remove-Item -Path $(Build.SorcesDirectory)/arorp -Recurse -Force
               # create empty file in the root of output 
               "" | Out-File -FilePath "$path\.artifactignore" -Encoding ascii
 
