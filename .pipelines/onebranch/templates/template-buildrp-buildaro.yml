@@ -6,7 +6,7 @@ steps:
     script: |
       export GOPATH=$(Agent.TempDirectory)
       mkdir -p $(Agent.TempDirectory)/src/github.com/Azure/
-      cp -rd $(Build.SourcesDirectory) $(Agent.TempDirectory)/src/github.com/Azure/ARO-RP
+      cp -rd $(Build.SourcesDirectory)/arorp $(Agent.TempDirectory)/src/github.com/Azure/ARO-RP
       cd $(Agent.TempDirectory)/src/github.com/Azure/ARO-RP
       make aro
       mkdir -p $(ob_outputDirectory) 
