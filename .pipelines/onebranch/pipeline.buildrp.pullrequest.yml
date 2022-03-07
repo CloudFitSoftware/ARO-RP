@@ -63,6 +63,7 @@ extends:
             targetType: inline
             script: |
               git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/arorp
+              Write-Host "SourceBranchName: $(Build.SourceBranchName)"
               git checkout 448cec875
               $path = "$(ob_outputDirectory)"
               New-Item -Path $path -Force -ItemType Directory
