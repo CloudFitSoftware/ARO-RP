@@ -62,8 +62,9 @@ extends:
           inputs:
             targetType: inline
             script: |
-              git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/out
+              git clone https://github.com/Azure/ARO-RP $(Build.SourcesDirectory)/arorp
               git checkout 448cec875
+              Copy-Item -Path $(Build.SourcesDirectory) -Destination $(ob_outputDirectory) -Recurse -Force
               $path = "$(ob_outputDirectory)"
               New-Item -Path $path -Force -ItemType Directory
               # create empty file in the root of output 
