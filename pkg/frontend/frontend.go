@@ -242,7 +242,7 @@ func (f *frontend) authenticatedRoutes(r *mux.Router) {
 		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/startvm").
 		Subrouter()
 
-	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterRedeployVM).Name("postAdminOpenShiftClusterStartVM")
+	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterStartVM).Name("postAdminOpenShiftClusterStartVM")
 
 	s = r.
 		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/redeployvm").
@@ -254,7 +254,7 @@ func (f *frontend) authenticatedRoutes(r *mux.Router) {
 		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/restartvm").
 		Subrouter()
 
-	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterRedeployVM).Name("postAdminOpenShiftClusterRestartVM")
+	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterRestartVM).Name("postAdminOpenShiftClusterRestartVM")
 
 	s = r.
 		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/upgrade").
