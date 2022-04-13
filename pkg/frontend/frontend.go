@@ -40,6 +40,8 @@ func (err statusCodeError) Error() string {
 
 type kubeActionsFactory func(*logrus.Entry, env.Interface, *api.OpenShiftCluster) (adminactions.KubeActions, error)
 
+type drainActionsFactory func(*logrus.Entry, env.Interface, *api.OpenShiftCluster) (adminactions.DrainActions, error)
+
 type azureActionsFactory func(*logrus.Entry, env.Interface, *api.OpenShiftCluster, *api.SubscriptionDocument) (adminactions.AzureActions, error)
 
 type ocEnricherFactory func(log *logrus.Entry, dialer proxy.Dialer, m metrics.Interface) clusterdata.OpenShiftClusterEnricher
@@ -58,6 +60,7 @@ type frontend struct {
 	aead encryption.AEAD
 
 	kubeActionsFactory  kubeActionsFactory
+	drainActionsFactory drainActionsFactory
 	azureActionsFactory azureActionsFactory
 	ocEnricherFactory   ocEnricherFactory
 
@@ -91,6 +94,7 @@ func NewFrontend(ctx context.Context,
 	m metrics.Interface,
 	aead encryption.AEAD,
 	kubeActionsFactory kubeActionsFactory,
+	drainActionsFactory drainActionsFactory,
 	azureActionsFactory azureActionsFactory,
 	ocEnricherFactory ocEnricherFactory) (Runnable, error) {
 	f := &frontend{
@@ -104,6 +108,7 @@ func NewFrontend(ctx context.Context,
 		m:                   m,
 		aead:                aead,
 		kubeActionsFactory:  kubeActionsFactory,
+		drainActionsFactory: drainActionsFactory,
 		azureActionsFactory: azureActionsFactory,
 		ocEnricherFactory:   ocEnricherFactory,
 
@@ -261,6 +266,18 @@ func (f *frontend) authenticatedRoutes(r *mux.Router) {
 		Subrouter()
 
 	s.Methods(http.MethodPost).HandlerFunc(f.postAdminReconcileFailedNIC).Name("reconcileFailedNic")
+
+	s = r.
+		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/cordonoruncordonnode").
+		Subrouter()
+
+	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterCordonOrUncordonNode).Name("postAdminOpenShiftClusterCordonOrUncordonNode")
+
+	s = r.
+		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/drainnode").
+		Subrouter()
+
+	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterDrainNode).Name("postAdminOpenShiftClusterDrainNode")
 
 	// Operations
 	s = r.

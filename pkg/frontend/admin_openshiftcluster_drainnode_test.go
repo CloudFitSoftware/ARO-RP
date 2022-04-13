@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Azure/ARO-RP/pkg/api"
@@ -21,16 +20,18 @@ import (
 	testdatabase "github.com/Azure/ARO-RP/test/database"
 )
 
-func TestAdminListResourcesList(t *testing.T) {
+func TestAdminDrainNode(t *testing.T) {
 	mockSubID := "00000000-0000-0000-0000-000000000000"
 	mockTenantID := "00000000-0000-0000-0000-000000000000"
+
 	ctx := context.Background()
 
 	type test struct {
 		name           string
 		resourceID     string
-		fixture        func(f *testdatabase.Fixture)
-		mocks          func(*test, *mock_adminactions.MockAzureActions)
+		fixture        func(*testdatabase.Fixture)
+		vmName         string
+		mocks          func(*test, *mock_adminactions.MockDrainActions)
 		wantStatusCode int
 		wantResponse   []byte
 		wantError      string
@@ -39,6 +40,7 @@ func TestAdminListResourcesList(t *testing.T) {
 	for _, tt := range []*test{
 		{
 			name:       "basic coverage",
+			vmName:     "aro-worker-australiasoutheast-7tcq7",
 			resourceID: testdatabase.GetResourcePath(mockSubID, "resourceName"),
 			fixture: func(f *testdatabase.Fixture) {
 				f.AddOpenShiftClusterDocuments(&api.OpenShiftClusterDocument{
@@ -49,12 +51,10 @@ func TestAdminListResourcesList(t *testing.T) {
 							ClusterProfile: api.ClusterProfile{
 								ResourceGroupID: fmt.Sprintf("/subscriptions/%s/resourceGroups/test-cluster", mockSubID),
 							},
-							MasterProfile: api.MasterProfile{
-								SubnetID: fmt.Sprintf("/subscriptions/%s/resourceGroups/test-cluster/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/master", mockSubID),
-							},
 						},
 					},
 				})
+
 				f.AddSubscriptionDocuments(&api.SubscriptionDocument{
 					ID: mockSubID,
 					Subscription: &api.Subscription{
@@ -65,32 +65,27 @@ func TestAdminListResourcesList(t *testing.T) {
 					},
 				})
 			},
-			mocks: func(tt *test, a *mock_adminactions.MockAzureActions) {
-
-				a.EXPECT().
-					ResourcesList(gomock.Any()).
-					Return([]byte(`[{"properties":{"dhcpOptions":{"dnsServers":[]}},"id":"/subscriptions/id","type":"Microsoft.Network/virtualNetworks"},{"properties":{"provisioningState":"Succeeded"},"id":"/subscriptions/id","type":"Microsoft.Compute/virtualMachines"},{"id":"/subscriptions/id","name":"storage","type":"Microsoft.Storage/storageAccounts","location":"eastus"}]`), nil)
-
+			mocks: func(tt *test, d *mock_adminactions.MockDrainActions) {
+				d.EXPECT().RunNodeDrain(tt.vmName).Return(nil)
 			},
 			wantStatusCode: http.StatusOK,
-			wantResponse:   []byte(`[{"properties":{"dhcpOptions":{"dnsServers":[]}},"id":"/subscriptions/id","type":"Microsoft.Network/virtualNetworks"},{"properties":{"provisioningState":"Succeeded"},"id":"/subscriptions/id","type":"Microsoft.Compute/virtualMachines"},{"id":"/subscriptions/id","name":"storage","type":"Microsoft.Storage/storageAccounts","location":"eastus"}]` + "\n"),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			ti := newTestInfra(t).WithSubscriptions().WithOpenShiftClusters()
+			ti := newTestInfra(t).WithOpenShiftClusters().WithSubscriptions()
 			defer ti.done()
 
-			a := mock_adminactions.NewMockAzureActions(ti.controller)
-			tt.mocks(tt, a)
+			d := mock_adminactions.NewMockDrainActions(ti.controller)
+			tt.mocks(tt, d)
 
 			err := ti.buildFixtures(tt.fixture)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			f, err := NewFrontend(ctx, ti.audit, ti.log, ti.env, ti.asyncOperationsDatabase, ti.openShiftClustersDatabase, ti.subscriptionsDatabase, api.APIs, &noop.Noop{}, nil, nil, nil, func(*logrus.Entry, env.Interface, *api.OpenShiftCluster, *api.SubscriptionDocument) (adminactions.AzureActions, error) {
-				return a, nil
-			}, nil)
+			f, err := NewFrontend(ctx, ti.audit, ti.log, ti.env, ti.asyncOperationsDatabase, ti.openShiftClustersDatabase, ti.subscriptionsDatabase, api.APIs, &noop.Noop{}, nil, nil, func(*logrus.Entry, env.Interface, *api.OpenShiftCluster) (adminactions.DrainActions, error) {
+				return d, nil
+			}, nil, nil)
 
 			if err != nil {
 				t.Fatal(err)
@@ -98,11 +93,11 @@ func TestAdminListResourcesList(t *testing.T) {
 
 			go f.Run(ctx, nil, nil)
 
-			resp, b, err := ti.request(http.MethodGet,
-				fmt.Sprintf("https://server/admin/%s/resources", tt.resourceID),
+			resp, b, err := ti.request(http.MethodPost,
+				fmt.Sprintf("https://server/admin%s/drainnode?vmName=%s", tt.resourceID, tt.vmName),
 				nil, nil)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
 			}
 
 			err = validateResponse(resp, b, tt.wantStatusCode, tt.wantError, tt.wantResponse)
