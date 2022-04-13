@@ -28,7 +28,7 @@ type drainActions struct {
 	log *logrus.Entry
 	oc  *api.OpenShiftCluster
 
-	drainer       *drain.Helper
+	drainer       drain.Helper
 	kubernetescli kubernetes.Interface
 }
 
@@ -44,7 +44,7 @@ func NewDrainActions(log *logrus.Entry, env env.Interface, oc *api.OpenShiftClus
 		return nil, err
 	}
 
-	drainer := &drain.Helper{
+	drainer := drain.Helper{
 		Client:              kubernetescli,
 		Force:               true,
 		GracePeriodSeconds:  -1,
@@ -76,9 +76,9 @@ func (d *drainActions) CordonOrUncordon(ctx context.Context, nodeName string, sc
 		return err
 	}
 
-	return drain.RunCordonOrUncordon(d.drainer, node, schedulable)
+	return drain.RunCordonOrUncordon(&d.drainer, node, schedulable)
 }
 
 func (d *drainActions) RunNodeDrain(nodeName string) error {
-	return drain.RunNodeDrain(d.drainer, nodeName)
+	return drain.RunNodeDrain(&d.drainer, nodeName)
 }
