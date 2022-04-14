@@ -57,14 +57,6 @@ func RunCordonOrUncordon(drainer *Helper, node *corev1.Node, desired bool) error
 		return nil
 	}
 
-	if drainer.Ctx == nil {
-		return fmt.Errorf("cordon error: drainer.ctx is null")
-	}
-
-	if drainer.Client == nil {
-		return fmt.Errorf("cordon error: drainer.client is null")
-	}
-
 	err, patchErr := c.PatchOrReplaceWithContext(drainer.Ctx, drainer.Client, false)
 	if err != nil {
 		if patchErr != nil {

@@ -268,10 +268,10 @@ func (f *frontend) authenticatedRoutes(r *mux.Router) {
 	s.Methods(http.MethodPost).HandlerFunc(f.postAdminReconcileFailedNIC).Name("reconcileFailedNic")
 
 	s = r.
-		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/cordonoruncordonnode").
+		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/cordonnode").
 		Subrouter()
 
-	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterCordonOrUncordonNode).Name("postAdminOpenShiftClusterCordonOrUncordonNode")
+	s.Methods(http.MethodPost).HandlerFunc(f.postAdminOpenShiftClusterCordonNode).Name("postAdminOpenShiftClusterCordonNode")
 
 	s = r.
 		Path("/admin/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}/drainnode").

@@ -17,21 +17,21 @@ import (
 	"github.com/Azure/ARO-RP/pkg/frontend/middleware"
 )
 
-func (f *frontend) postAdminOpenShiftClusterCordonOrUncordonNode(w http.ResponseWriter, r *http.Request) {
+func (f *frontend) postAdminOpenShiftClusterCordonNode(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ctx.Value(middleware.ContextKeyLog).(*logrus.Entry)
 	r.URL.Path = filepath.Dir(r.URL.Path)
 
-	err := f._postAdminOpenShiftClusterCordonOrUncordonNode(ctx, r, log)
+	err := f._postAdminOpenShiftClusterCordonNode(ctx, r, log)
 
 	adminReply(log, w, nil, nil, err)
 }
 
-func (f *frontend) _postAdminOpenShiftClusterCordonOrUncordonNode(ctx context.Context, r *http.Request, log *logrus.Entry) error {
+func (f *frontend) _postAdminOpenShiftClusterCordonNode(ctx context.Context, r *http.Request, log *logrus.Entry) error {
 	vars := mux.Vars(r)
 
 	vmName := r.URL.Query().Get("vmName")
-	schedulable := r.URL.Query().Get("schedulable") == "true"
+	unschedulable := r.URL.Query().Get("unschedulable") == "true"
 	err := validateAdminKubernetesObjects(r.Method, "Node", "", vmName)
 	if err != nil {
 		return err
@@ -52,5 +52,5 @@ func (f *frontend) _postAdminOpenShiftClusterCordonOrUncordonNode(ctx context.Co
 		return err
 	}
 
-	return d.CordonOrUncordon(ctx, vmName, schedulable)
+	return d.CordonNode(ctx, vmName, unschedulable)
 }

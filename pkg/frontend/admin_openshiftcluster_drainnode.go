@@ -51,5 +51,5 @@ func (f *frontend) _postAdminOpenShiftClusterDrainNode(ctx context.Context, r *h
 		return err
 	}
 
-	return d.RunNodeDrain(vmName)
+	return d.DrainNode(vmName)
 }

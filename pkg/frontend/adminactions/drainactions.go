@@ -21,8 +21,8 @@ import (
 
 // DrainActions are those that involve k8s objects, and thus depend upon k8s clients being createable
 type DrainActions interface {
-	CordonOrUncordon(ctx context.Context, nodeName string, desired bool) error
-	RunNodeDrain(nodeName string) error
+	CordonNode(ctx context.Context, nodeName string, unschedulable bool) error
+	DrainNode(nodeName string) error
 }
 
 type drainActions struct {
@@ -52,7 +52,7 @@ func NewDrainActions(log *logrus.Entry, env env.Interface, oc *api.OpenShiftClus
 	}, nil
 }
 
-func (d *drainActions) CordonOrUncordon(ctx context.Context, nodeName string, schedulable bool) error {
+func (d *drainActions) CordonNode(ctx context.Context, nodeName string, unschedulable bool) error {
 
 	node, err := d.kubernetescli.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -75,10 +75,10 @@ func (d *drainActions) CordonOrUncordon(ctx context.Context, nodeName string, sc
 		ErrOut: log.Writer(),
 	}
 
-	return drain.RunCordonOrUncordon(drainer, node, schedulable)
+	return drain.RunCordonOrUncordon(drainer, node, unschedulable)
 }
 
-func (d *drainActions) RunNodeDrain(nodeName string) error {
+func (d *drainActions) DrainNode(nodeName string) error {
 
 	drainer := &drain.Helper{
 		Client:              d.kubernetescli,

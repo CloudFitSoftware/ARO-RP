@@ -32,7 +32,7 @@ func TestAdminCordonUncordonNode(t *testing.T) {
 		resourceID     string
 		fixture        func(*testdatabase.Fixture)
 		vmName         string
-		schedulable    string
+		unschedulable  string
 		mocks          func(*test, *mock_adminactions.MockDrainActions)
 		wantStatusCode int
 		wantResponse   []byte
@@ -41,10 +41,10 @@ func TestAdminCordonUncordonNode(t *testing.T) {
 
 	for _, tt := range []*test{
 		{
-			name:        "basic coverage - cordon",
-			vmName:      "aro-worker-australiasoutheast-7tcq7",
-			schedulable: "false",
-			resourceID:  testdatabase.GetResourcePath(mockSubID, "resourceName"),
+			name:          "basic coverage - cordon",
+			vmName:        "aro-worker-australiasoutheast-7tcq7",
+			unschedulable: "false",
+			resourceID:    testdatabase.GetResourcePath(mockSubID, "resourceName"),
 			fixture: func(f *testdatabase.Fixture) {
 				f.AddOpenShiftClusterDocuments(&api.OpenShiftClusterDocument{
 					Key: strings.ToLower(testdatabase.GetResourcePath(mockSubID, "resourceName")),
@@ -69,15 +69,15 @@ func TestAdminCordonUncordonNode(t *testing.T) {
 				})
 			},
 			mocks: func(tt *test, d *mock_adminactions.MockDrainActions) {
-				d.EXPECT().CordonOrUncordon(gomock.Any(), tt.vmName, false).Return(nil)
+				d.EXPECT().CordonNode(gomock.Any(), tt.vmName, false).Return(nil)
 			},
 			wantStatusCode: http.StatusOK,
 		},
 		{
-			name:        "basic coverage - uncordon",
-			vmName:      "aro-worker-australiasoutheast-7tcq7",
-			schedulable: "true",
-			resourceID:  testdatabase.GetResourcePath(mockSubID, "resourceName"),
+			name:          "basic coverage - uncordon",
+			vmName:        "aro-worker-australiasoutheast-7tcq7",
+			unschedulable: "true",
+			resourceID:    testdatabase.GetResourcePath(mockSubID, "resourceName"),
 			fixture: func(f *testdatabase.Fixture) {
 				f.AddOpenShiftClusterDocuments(&api.OpenShiftClusterDocument{
 					Key: strings.ToLower(testdatabase.GetResourcePath(mockSubID, "resourceName")),
@@ -102,15 +102,15 @@ func TestAdminCordonUncordonNode(t *testing.T) {
 				})
 			},
 			mocks: func(tt *test, d *mock_adminactions.MockDrainActions) {
-				d.EXPECT().CordonOrUncordon(gomock.Any(), tt.vmName, true).Return(nil)
+				d.EXPECT().CordonNode(gomock.Any(), tt.vmName, true).Return(nil)
 			},
 			wantStatusCode: http.StatusOK,
 		},
 		{
-			name:        "unable to parse schedulable parameter - default to false",
-			vmName:      "aro-worker-australiasoutheast-7tcq7",
-			schedulable: "unable_to_parse",
-			resourceID:  testdatabase.GetResourcePath(mockSubID, "resourceName"),
+			name:          "unable to parse schedulable parameter - default to false",
+			vmName:        "aro-worker-australiasoutheast-7tcq7",
+			unschedulable: "unable_to_parse",
+			resourceID:    testdatabase.GetResourcePath(mockSubID, "resourceName"),
 			fixture: func(f *testdatabase.Fixture) {
 				f.AddOpenShiftClusterDocuments(&api.OpenShiftClusterDocument{
 					Key: strings.ToLower(testdatabase.GetResourcePath(mockSubID, "resourceName")),
@@ -135,7 +135,7 @@ func TestAdminCordonUncordonNode(t *testing.T) {
 				})
 			},
 			mocks: func(tt *test, d *mock_adminactions.MockDrainActions) {
-				d.EXPECT().CordonOrUncordon(gomock.Any(), tt.vmName, false).Return(nil)
+				d.EXPECT().CordonNode(gomock.Any(), tt.vmName, false).Return(nil)
 			},
 			wantStatusCode: http.StatusOK,
 		},
@@ -163,7 +163,7 @@ func TestAdminCordonUncordonNode(t *testing.T) {
 			go f.Run(ctx, nil, nil)
 
 			resp, b, err := ti.request(http.MethodPost,
-				fmt.Sprintf("https://server/admin%s/cordonoruncordonnode?vmName=%s&schedulable=%s", tt.resourceID, tt.vmName, tt.schedulable),
+				fmt.Sprintf("https://server/admin%s/cordonnode?vmName=%s&unschedulable=%s", tt.resourceID, tt.vmName, tt.unschedulable),
 				nil, nil)
 			if err != nil {
 				t.Error(err)

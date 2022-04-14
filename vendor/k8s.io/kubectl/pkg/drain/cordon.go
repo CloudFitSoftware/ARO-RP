@@ -100,26 +100,6 @@ func (c *CordonHelper) PatchOrReplaceWithContext(clientCtx context.Context, clie
 			patchOptions.DryRun = []string{metav1.DryRunAll}
 		}
 
-		if client == nil {
-			return fmt.Errorf("client is null"), nil
-		}
-
-		if clientCtx == nil {
-			return fmt.Errorf("clientCtx is null"), nil
-		}
-
-		if c.node == nil {
-			return fmt.Errorf("c.Node is null"), nil
-		}
-
-		if c.node.Name == "" {
-			return fmt.Errorf("c.Node.Name is null"), nil
-		}
-
-		if patchBytes == nil {
-			return fmt.Errorf("patchBytes is null"), nil
-		}
-
 		_, err = client.Patch(clientCtx, c.node.Name, types.StrategicMergePatchType, patchBytes, patchOptions)
 	} else {
 		updateOptions := metav1.UpdateOptions{}

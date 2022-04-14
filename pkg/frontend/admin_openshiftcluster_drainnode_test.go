@@ -66,7 +66,7 @@ func TestAdminDrainNode(t *testing.T) {
 				})
 			},
 			mocks: func(tt *test, d *mock_adminactions.MockDrainActions) {
-				d.EXPECT().RunNodeDrain(tt.vmName).Return(nil)
+				d.EXPECT().DrainNode(tt.vmName).Return(nil)
 			},
 			wantStatusCode: http.StatusOK,
 		},

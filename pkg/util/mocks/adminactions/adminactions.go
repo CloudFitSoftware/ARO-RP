@@ -132,32 +132,32 @@ func (m *MockDrainActions) EXPECT() *MockDrainActionsMockRecorder {
 	return m.recorder
 }
 
-// CordonOrUncordon mocks base method.
-func (m *MockDrainActions) CordonOrUncordon(arg0 context.Context, arg1 string, arg2 bool) error {
+// CordonNode mocks base method.
+func (m *MockDrainActions) CordonNode(arg0 context.Context, arg1 string, arg2 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CordonOrUncordon", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CordonNode", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CordonOrUncordon indicates an expected call of CordonOrUncordon.
-func (mr *MockDrainActionsMockRecorder) CordonOrUncordon(arg0, arg1, arg2 interface{}) *gomock.Call {
+// CordonNode indicates an expected call of CordonNode.
+func (mr *MockDrainActionsMockRecorder) CordonNode(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CordonOrUncordon", reflect.TypeOf((*MockDrainActions)(nil).CordonOrUncordon), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CordonNode", reflect.TypeOf((*MockDrainActions)(nil).CordonNode), arg0, arg1, arg2)
 }
 
-// RunNodeDrain mocks base method.
-func (m *MockDrainActions) RunNodeDrain(arg0 string) error {
+// DrainNode mocks base method.
+func (m *MockDrainActions) DrainNode(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RunNodeDrain", arg0)
+	ret := m.ctrl.Call(m, "DrainNode", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// RunNodeDrain indicates an expected call of RunNodeDrain.
-func (mr *MockDrainActionsMockRecorder) RunNodeDrain(arg0 interface{}) *gomock.Call {
+// DrainNode indicates an expected call of DrainNode.
+func (mr *MockDrainActionsMockRecorder) DrainNode(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunNodeDrain", reflect.TypeOf((*MockDrainActions)(nil).RunNodeDrain), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DrainNode", reflect.TypeOf((*MockDrainActions)(nil).DrainNode), arg0)
 }
 
 // MockAzureActions is a mock of AzureActions interface.
