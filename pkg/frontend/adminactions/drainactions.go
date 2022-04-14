@@ -29,7 +29,6 @@ type drainActions struct {
 	log *logrus.Entry
 	oc  *api.OpenShiftCluster
 
-	drainer       *drain.Helper
 	kubernetescli kubernetes.Interface
 }
 
@@ -45,8 +44,24 @@ func NewDrainActions(log *logrus.Entry, env env.Interface, oc *api.OpenShiftClus
 		return nil, err
 	}
 
+	return &drainActions{
+		log: log,
+		oc:  oc,
+
+		kubernetescli: kubernetescli,
+	}, nil
+}
+
+func (d *drainActions) CordonOrUncordon(ctx context.Context, nodeName string, schedulable bool) error {
+
+	node, err := d.kubernetescli.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
 	drainer := &drain.Helper{
-		Client:              kubernetescli,
+		Ctx:                 ctx,
+		Client:              d.kubernetescli,
 		Force:               true,
 		GracePeriodSeconds:  -1,
 		IgnoreAllDaemonSets: true,
@@ -60,28 +75,25 @@ func NewDrainActions(log *logrus.Entry, env env.Interface, oc *api.OpenShiftClus
 		ErrOut: log.Writer(),
 	}
 
-	return &drainActions{
-		log: log,
-		oc:  oc,
-
-		drainer: drainer,
-
-		kubernetescli: kubernetescli,
-	}, nil
-}
-
-func (d *drainActions) CordonOrUncordon(ctx context.Context, nodeName string, schedulable bool) error {
-
-	node, err := d.kubernetescli.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	if node != nil {
-		log.Printf("Node %s Found, setting schedulable field to %t!!!!!", nodeName, schedulable)
-	}
-	return drain.RunCordonOrUncordon(d.drainer, node, schedulable)
+	return drain.RunCordonOrUncordon(drainer, node, schedulable)
 }
 
 func (d *drainActions) RunNodeDrain(nodeName string) error {
-	return drain.RunNodeDrain(d.drainer, nodeName)
+
+	drainer := &drain.Helper{
+		Client:              d.kubernetescli,
+		Force:               true,
+		GracePeriodSeconds:  -1,
+		IgnoreAllDaemonSets: true,
+		Timeout:             60 * time.Second,
+		DeleteEmptyDirData:  true,
+		DisableEviction:     true,
+		OnPodDeletedOrEvicted: func(pod *corev1.Pod, usingEviction bool) {
+			log.Printf("deleted pod %s/%s", pod.Namespace, pod.Name)
+		},
+		Out:    log.Writer(),
+		ErrOut: log.Writer(),
+	}
+
+	return drain.RunNodeDrain(drainer, nodeName)
 }
