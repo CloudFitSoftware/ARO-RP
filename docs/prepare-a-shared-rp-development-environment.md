@@ -16,7 +16,7 @@ locations.
    resource group of the DNS Zone resource:
 
    ```bash
-   PARENT_DOMAIN_NAME=osadev.cloud
+   PARENT_DOMAIN_NAME=aroev2.osadev.cloud
    PARENT_DOMAIN_RESOURCEGROUP=dns
    ```
 
@@ -27,7 +27,7 @@ locations.
    Set SECRET_SA_ACCOUNT_NAME to the name of the storage account:
 
    ```bash
-   SECRET_SA_ACCOUNT_NAME=rharosecrets
+   SECRET_SA_ACCOUNT_NAME=rharosecretscf2
    ```
 
 1. You will need an AAD object (this could be your AAD user, or an AAD group of
@@ -35,7 +35,7 @@ locations.
    development environment key vault(s).  Set ADMIN_OBJECT_ID to the object ID.
 
    ```bash
-   ADMIN_OBJECT_ID="$(az ad group show -g 'ARO v4 RP Engineering' --query objectId -o tsv)"
+   ADMIN_OBJECT_ID="$(az ad group show -g 'Azure Red Hat OpenShift MSFT Engineering' --query objectId -o tsv)"
    ```
 
 1. You will need the ARO RP-specific pull secret (ask one of the
@@ -88,14 +88,14 @@ locations.
    ```
 
    ```bash
+   // note: for macos change the -w0 option for base64 to -b0
    AZURE_ARM_CLIENT_ID="$(az ad app create \
-     --display-name aro-v4-arm-shared \
-     --identifier-uris "https://$(uuidgen)/" \
+     --display-name aro-v4-arm-shared-cf \
      --query appId \
      -o tsv)"
    az ad app credential reset \
      --id "$AZURE_ARM_CLIENT_ID" \
-     --cert "$(base64 -w0 <secrets/arm.crt)" >/dev/null
+     --cert "$(base64 -b0 <secrets/arm.crt)" >/dev/null  
    az ad sp create --id "$AZURE_ARM_CLIENT_ID" >/dev/null
    ```
 
@@ -117,14 +117,14 @@ locations.
    Now create the application:
 
    ```bash
+   // note: for macos change the -w0 option for base64 to -b0
    AZURE_FP_CLIENT_ID="$(az ad app create \
-     --display-name aro-v4-fp-shared \
-     --identifier-uris "https://$(uuidgen)/" \
+     --display-name aro-v4-fp-shared-cf \
      --query appId \
      -o tsv)"
    az ad app credential reset \
      --id "$AZURE_FP_CLIENT_ID" \
-     --cert "$(base64 -w0 <secrets/firstparty.crt)" >/dev/null
+     --cert "$(base64 -b0 <secrets/firstparty.crt)" >/dev/null
    az ad sp create --id "$AZURE_FP_CLIENT_ID" >/dev/null
    ```
 
@@ -139,9 +139,8 @@ locations.
    ```bash
    AZURE_RP_CLIENT_SECRET="$(uuidgen)"
    AZURE_RP_CLIENT_ID="$(az ad app create \
-     --display-name aro-v4-rp-shared \
+     --display-name aro-v4-rp-shared-cf \
      --end-date '2299-12-31T11:59:59+00:00' \
-     --identifier-uris "https://$(uuidgen)/" \
      --key-type password \
      --password "$AZURE_RP_CLIENT_SECRET" \
      --query appId \
@@ -160,9 +159,8 @@ locations.
    ```bash
    AZURE_GATEWAY_CLIENT_SECRET="$(uuidgen)"
    AZURE_GATEWAY_CLIENT_ID="$(az ad app create \
-     --display-name aro-v4-gateway-shared \
+     --display-name aro-v4-gateway-shared-cf \
      --end-date '2299-12-31T11:59:59+00:00' \
-     --identifier-uris "https://$(uuidgen)/" \
      --key-type password \
      --password "$AZURE_GATEWAY_CLIENT_SECRET" \
      --query appId \
@@ -175,9 +173,8 @@ locations.
    ```bash
    AZURE_CLIENT_SECRET="$(uuidgen)"
    AZURE_CLIENT_ID="$(az ad app create \
-     --display-name aro-v4-tooling-shared \
+     --display-name aro-v4-tooling-shared-cf \
      --end-date '2299-12-31T11:59:59+00:00' \
-     --identifier-uris "https://$(uuidgen)/" \
      --key-type password \
      --password "$AZURE_CLIENT_SECRET" \
      --query appId \
@@ -190,30 +187,31 @@ locations.
    * `Contributor`  on your subscription.
    * `User Access Administrator` on your subscription.
 
+// NOTE: It was suggested that this may not be necesssary anymore and that we did not have to do this in Fairfax. follow up with RH before PR. Skipping to line 204 where RP role defs and assignments are setup
    You must also manually grant this application the `Microsoft.Graph/Application.ReadWrite.OwnedBy` permission, which requires admin access, in order for AAD applications to be created/deleted on a per-cluster basis.
 
    * Go into the Azure Portal
    * Go to Azure Active Directory
-   * Navigate to the `aro-v4-tooling-shared` app page
+   * Navigate to the `aro-v4-tooling-shared` app registration page
    * Click 'API permissions' in the left side pane
-   * Click 'Microsoft Graph'
    * Click 'Add a permission'.
+   * Click 'Microsoft Graph'
    * Select 'Application permissions'
    * Search for 'Application' and select `Application.ReadWrite.OwnedBy`
    * Click 'Add permissions'
    * This request will need to be approved by a tenant administrator. If you are one, you can click the `Grant admin consent for <name>` button to the right of the `Add a permission` button on the app page
 
-1. Set up the RP role definitions and subscription role assignments in your
-   Azure subscription. This mimics the RBAC that ARM sets up.  With at least
-   `User Access Administrator` permissions on your subscription, do:
+1. Set up the RP role definitions and subscription role assignments in your Azure subscription. The usage of "uuidgen" for fpRoleDefinitionId is simply there to keep from interfering with any linked resources and to create the role net new. This mimics the RBAC that ARM sets up. With at least `User Access Administrator` permissions on your subscription, do:
 
    ```bash
+   LOCATION=eastus
    az deployment sub create \
      -l $LOCATION \
      --template-file deploy/rbac-development.json \
      --parameters \
        "armServicePrincipalId=$(az ad sp list --filter "appId eq '$AZURE_ARM_CLIENT_ID'" --query '[].objectId' -o tsv)" \
        "fpServicePrincipalId=$(az ad sp list --filter "appId eq '$AZURE_FP_CLIENT_ID'" --query '[].objectId' -o tsv)" \
+       "fpRoleDefinitionId"="$(uuidgen)" \
        "devServicePrincipalId=$(az ad sp list --filter "appId eq '$AZURE_CLIENT_ID'" --query '[].objectId' -o tsv)" \
      >/dev/null
    ```
@@ -230,15 +228,15 @@ locations.
    ```
 
    ```bash
+   // note: for macos change the -w0 option for base64 to -b0
    AZURE_PORTAL_CLIENT_ID="$(az ad app create \
-     --display-name aro-v4-portal-shared \
-     --identifier-uris "https://$(uuidgen)/" \
+     --display-name aro-v4-portal-shared-cf \
      --reply-urls "https://localhost:8444/callback" \
      --query appId \
      -o tsv)"
    az ad app credential reset \
      --id "$AZURE_PORTAL_CLIENT_ID" \
-     --cert "$(base64 -w0 <secrets/portal-client.crt)" >/dev/null
+     --cert "$(base64 -b0 <secrets/portal-client.crt)" >/dev/null
    ```
 
    TODO: more steps are needed to configure aro-v4-portal-shared.
@@ -248,13 +246,14 @@ locations.
    1. Create the application and set `requestedAccessTokenVersion`
 
    ```bash
-   AZURE_DBTOKEN_CLIENT_ID="$(az ad app create --display-name dbtoken \
+   AZURE_DBTOKEN_CLIENT_ID="$(az ad app create --display-name dbtoken-cf \
       --oauth2-allow-implicit-flow false \
       --query appId \
       -o tsv)"
 
    OBJ_ID="$(az ad app show --id $AZURE_DBTOKEN_CLIENT_ID --query objectId)"
 
+   // NOTE: the graph API requires this to be done from a managed machine
    az rest --method PATCH \
       --uri https://graph.microsoft.com/v1.0/applications/$OBJ_ID/ \
       --body '{"api":{"requestedAccessTokenVersion": 2}}'
@@ -378,7 +377,7 @@ storage account so other people on your team can access it via `make secrets`
 # Environment file
 
 1. Choose the resource group prefix.  The resource group location will be
-   appended to the prefix to make the resource group name.
+   appended to the prefix to make the resource group name. Be unique here, just going with "v4" will run you into collisions with existing deployments.
 
    ```bash
    RESOURCEGROUP_PREFIX=v4
@@ -390,7 +389,7 @@ storage account so other people on your team can access it via `make secrets`
    ```bash
    PROXY_DOMAIN_NAME_LABEL=aroproxy
    ```
-
+// CDP UPDATE SECRETS EXAMPLE
 1. Create the secrets/env file:
 
    ```bash
@@ -457,6 +456,8 @@ each of the bash functions below.
    # Deploy the predeployment ARM template
    deploy_rp_dev_predeploy
    # Deploy the infrastructure resources such as Cosmos, KV, Vnet...
+   # HAD to remove ipRules - CDP ADD TO DOCS
+   # HAD to add gwy keyvault - CDP ADD TO DOCS
    deploy_rp_dev
    # Deploy the proxy and VPN
    deploy_env_dev
@@ -525,6 +526,7 @@ Vault Name: "$KEYVAULT_PREFIX-svc"
 Certificate: rp-firstparty
 Development value: secrets/firstparty.pem
 
+// COREY DELETE THIS AND MENTION IN PR
 Vault Name: "$KEYVAULT_PREFIX-svc"
 Certificate: cluster-mdsd
 Development value: secrets/cluster-logging-int.pem
