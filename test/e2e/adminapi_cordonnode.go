@@ -26,7 +26,7 @@ var _ = Describe("[Admin API] Cordon Node action", func() {
 			LabelSelector: "node-role.kubernetes.io/worker",
 		})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(nodes).NotTo(HaveLen(0))
+		Expect(nodes.Items).NotTo(HaveLen(0))
 		node := nodes.Items[0]
 		log.Infof("selected node: %s", node.Name)
 
