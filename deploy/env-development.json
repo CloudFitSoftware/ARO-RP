@@ -32,53 +32,22 @@
         "proxyKey": {
             "type": "securestring"
         },
-        "publicIPAddressAllocationMethod": {
-            "type": "string",
-            "defaultValue": "Static"
-        },
-        "publicIPAddressSkuName": {
-            "type": "string",
-            "defaultValue": "Standard"
-        },
         "sshPublicKey": {
             "type": "string"
-        },
-        "vpnCACertificate": {
-            "type": "string",
-            "defaultValue": ""
         }
     },
     "resources": [
         {
-            "sku": {
-                "name": "[parameters('publicIPAddressSkuName')]"
-            },
-            "properties": {
-                "publicIPAllocationMethod": "[parameters('publicIPAddressAllocationMethod')]"
-            },
-            "name": "dev-vpn-pip",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "location": "[resourceGroup().location]",
-            "condition": "[equals(parameters('ciCapacity'), 0)]",
-            "apiVersion": "2020-08-01"
-        },
-        {
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "10.0.0.0/9"
+                        "11.0.0.0/9"
                     ]
                 },
                 "subnets": [
                     {
                         "properties": {
-                            "addressPrefix": "10.0.0.0/24"
-                        },
-                        "name": "GatewaySubnet"
-                    },
-                    {
-                        "properties": {
-                            "addressPrefix": "10.0.1.0/24",
+                            "addressPrefix": "11.0.1.0/24",
                             "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'rp-nsg')]",
                                 "tags": null
@@ -92,55 +61,6 @@
             "type": "Microsoft.Network/virtualNetworks",
             "location": "[resourceGroup().location]",
             "apiVersion": "2020-08-01"
-        },
-        {
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "properties": {
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'dev-vnet', 'GatewaySubnet')]"
-                            },
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'dev-vpn-pip')]"
-                            }
-                        },
-                        "name": "default"
-                    }
-                ],
-                "vpnType": "RouteBased",
-                "sku": {
-                    "name": "VpnGw1",
-                    "tier": "VpnGw1"
-                },
-                "vpnClientConfiguration": {
-                    "vpnClientAddressPool": {
-                        "addressPrefixes": [
-                            "192.168.255.0/24"
-                        ]
-                    },
-                    "vpnClientRootCertificates": [
-                        {
-                            "properties": {
-                                "publicCertData": "[parameters('vpnCACertificate')]"
-                            },
-                            "name": "dev-vpn-ca"
-                        }
-                    ],
-                    "vpnClientProtocols": [
-                        "OpenVPN"
-                    ]
-                }
-            },
-            "name": "dev-vpn",
-            "type": "Microsoft.Network/virtualNetworkGateways",
-            "location": "[resourceGroup().location]",
-            "condition": "[equals(parameters('ciCapacity'), 0)]",
-            "apiVersion": "2020-08-01",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', 'dev-vpn-pip')]",
-                "[resourceId('Microsoft.Network/virtualNetworks', 'dev-vnet')]"
-            ]
         },
         {
             "sku": {

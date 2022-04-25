@@ -82,10 +82,7 @@ deploy_env_dev_override() {
             "proxyImage=arointsvc.azurecr.io/proxy:latest" \
             "proxyImageAuth=$(jq -r '.auths["arointsvc.azurecr.io"].auth' <<<$PULL_SECRET)" \
             "proxyKey=$(base64 -w0 <secrets/proxy.key)" \
-            "sshPublicKey=$(<secrets/proxy_id_rsa.pub)" \
-            "vpnCACertificate=$(base64 -w0 <secrets/vpn-ca.crt)" \
-            "publicIPAddressSkuName=Basic" \
-            "publicIPAddressAllocationMethod=Dynamic" >/dev/null
+            "sshPublicKey=$(<secrets/proxy_id_rsa.pub)" >/dev/null
 }
 
 import_certs_secrets() {
