@@ -337,9 +337,9 @@ func (c *Cluster) generateSubnets() (vnetPrefix string, masterSubnet string, wor
 		x, y = rand.Intn(128), 2*rand.Intn(128)
 	}
 
-	vnetPrefix = fmt.Sprintf("10.%d.%d.0/23", x, y)
-	masterSubnet = fmt.Sprintf("10.%d.%d.0/24", x, y)
-	workerSubnet = fmt.Sprintf("10.%d.%d.0/24", x, y+1)
+	vnetPrefix = fmt.Sprintf("11.%d.%d.0/23", x, y)
+	masterSubnet = fmt.Sprintf("11.%d.%d.0/24", x, y)
+	workerSubnet = fmt.Sprintf("11.%d.%d.0/24", x, y+1)
 	return
 }
 
