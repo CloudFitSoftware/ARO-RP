@@ -43,6 +43,7 @@ func init() {
 				api.OperationSyncIdentityProvidersRead,
 				api.OperationSyncIdentityProvidersWrite,
 				api.OperationSyncIdentityProvidersDelete,
+				api.OperationOpenShiftClusterGetDetectors,
 			},
 		},
 	}
