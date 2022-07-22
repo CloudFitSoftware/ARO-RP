@@ -6,8 +6,6 @@ package cluster
 import (
 	"context"
 	"net/http"
-	"reflect"
-	"runtime"
 
 	"github.com/Azure/go-autorest/autorest/azure"
 	configv1 "github.com/openshift/api/config/v1"
@@ -23,6 +21,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/metrics"
 	aroclient "github.com/Azure/ARO-RP/pkg/operator/clientset/versioned"
+	"github.com/Azure/ARO-RP/pkg/util/steps"
 )
 
 type Monitor struct {
@@ -119,8 +118,9 @@ func (mon *Monitor) Monitor(ctx context.Context) (errs []error) {
 	statusCode, err := mon.emitAPIServerHealthzCode(ctx)
 	if err != nil {
 		errs = append(errs, err)
-		mon.log.Printf("%s: %s", runtime.FuncForPC(reflect.ValueOf(mon.emitAPIServerHealthzCode).Pointer()).Name(), err)
-		mon.emitGauge("monitor.clustererrors", 1, map[string]string{"monitor": runtime.FuncForPC(reflect.ValueOf(mon.emitAPIServerHealthzCode).Pointer()).Name()})
+		friendlyFuncName := steps.FriendlyName(mon.emitAPIServerHealthzCode)
+		mon.log.Printf("%s: %s", friendlyFuncName, err)
+		mon.emitGauge("monitor.clustererrors", 1, map[string]string{"monitor": friendlyFuncName})
 	}
 	if statusCode != http.StatusOK {
 		return
@@ -148,8 +148,9 @@ func (mon *Monitor) Monitor(ctx context.Context) (errs []error) {
 		err = f(ctx)
 		if err != nil {
 			errs = append(errs, err)
-			mon.log.Printf("%s: %s", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), err)
-			mon.emitGauge("monitor.clustererrors", 1, map[string]string{"monitor": runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()})
+			friendlyFuncName := steps.FriendlyName(f)
+			mon.log.Printf("%s: %s", friendlyFuncName, err)
+			mon.emitGauge("monitor.clustererrors", 1, map[string]string{"monitor": friendlyFuncName})
 			// keep going
 		}
 	}
