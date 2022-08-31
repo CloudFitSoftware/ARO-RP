@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -25,6 +26,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api/latest"
 
 	"github.com/Azure/ARO-RP/pkg/env"
+	"github.com/Azure/ARO-RP/pkg/metrics"
+	"github.com/Azure/ARO-RP/pkg/metrics/statsd"
 	aroclient "github.com/Azure/ARO-RP/pkg/operator/clientset/versioned"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/compute"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/features"
@@ -70,6 +73,7 @@ var (
 	vnetResourceGroup string
 	clusterName       string
 	clients           *clientSet
+	m                 metrics.Emitter
 )
 
 func skipIfNotInDevelopmentEnv() {
@@ -184,6 +188,8 @@ func setup(ctx context.Context) error {
 		return err
 	}
 
+	m = statsd.New(ctx, log.WithField("component", "metrics"), _env, os.Getenv("MDM_E2E_ACCOUNT"), os.Getenv("MDM_E2E_NAMESPACE"), os.Getenv("MDM_E2E_STATSD_SOCKET"))
+
 	vnetResourceGroup = os.Getenv("RESOURCEGROUP") // TODO: remove this when we deploy and peer a vnet per cluster create
 	if os.Getenv("CI") != "" {
 		vnetResourceGroup = os.Getenv("CLUSTER")
@@ -235,6 +241,9 @@ var _ = BeforeSuite(func() {
 
 	if err := setup(context.Background()); err != nil {
 		panic(err)
+	} else {
+		hook := statsd.NewStatsdHook(m)
+		log.Logger.AddHook(hook)
 	}
 })
 
@@ -244,4 +253,11 @@ var _ = AfterSuite(func() {
 	if err := done(context.Background()); err != nil {
 		panic(err)
 	}
+})
+
+var _ = JustAfterEach(func() {
+	gtd := CurrentGinkgoTestDescription()
+	metricName := strings.Replace(gtd.ComponentTexts[1], " ", ".", -1)
+
+	log.WithFields(logrus.Fields{"IsE2EEmittableMetric": "true", "MetricName": metricName, "MetricStatus": !gtd.Failed, "armResourceID": resourceIDFromEnv(), "armGeoLocation": _env.Location(), "resourceType": "openShiftClusters"}).Info("Emitting Metric: " + metricName)
 })
