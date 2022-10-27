@@ -1,5 +1,8 @@
 yum -y update
 
+# We need to manually set PasswordAuthentication to true in order for the VMSS Access JIT to work
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+
 lvextend -l +50%FREE /dev/rootvg/rootlv
 xfs_growfs /
 
@@ -435,9 +438,6 @@ done
 for scan in baseline clamav software; do
   /usr/local/bin/azsecd config -s $scan -d P1D
 done
-
-# We need to manually set PasswordAuthentication to true in order for the VMSS Access JIT to work
-sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 
 restorecon -RF /var/log/*
 
